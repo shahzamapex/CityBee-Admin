@@ -7,8 +7,12 @@ import { adminCookieName, isValidSession } from '@/lib/session';
  */
 export async function middleware(request: Request) {
   const { pathname } = new URL(request.url);
-  // Login page and auth API routes must stay reachable pre-session.
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/login')) {
+  // Public routes and auth API routes must stay reachable without a session.
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/submit') ||
+    pathname.startsWith('/api/login')
+  ) {
     return NextResponse.next();
   }
 

@@ -4,6 +4,7 @@ import { listEntity, resolveLookups } from '@/lib/data';
 import { getEntity, type Field } from '@/lib/entities';
 import { deleteRow } from './actions';
 import DeleteButton from '@/components/delete-button';
+import SubmissionActions from '@/components/submission-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +114,14 @@ export default async function EntityListPage({ params, searchParams }: PageProps
                     </td>
                   ))}
                   <td className="whitespace-nowrap px-4 py-3 text-right">
+                    {entity.key === 'submissions' && row.status === 'pending' && (
+                      <span className="mr-2">
+                        <SubmissionActions
+                          id={String(row.id)}
+                          businessName={String(row.business_name ?? '')}
+                        />
+                      </span>
+                    )}
                     <Link
                       href={`/${entity.key}/${row.id}`}
                       className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-stone-100 hover:text-[#FF6F00]"
