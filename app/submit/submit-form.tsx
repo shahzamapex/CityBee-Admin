@@ -6,6 +6,7 @@ import { getUploadSignature } from './upload-actions';
 import { getCategories, type DbCategory } from './category-actions';
 import CityAutocomplete, { type SelectedCity } from './city-autocomplete';
 import AddressAutocomplete, { type SelectedAddress } from './address-autocomplete';
+import LocationPicker, { type PinnedLocation } from './location-picker';
 import Combobox from './combobox';
 import { getSuggestions, type FieldSuggestions } from './suggestion-actions';
 
@@ -144,6 +145,7 @@ export default function SubmitForm() {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [city, setCity] = useState<SelectedCity | null>(null);
   const [address, setAddress] = useState<SelectedAddress | null>(null);
+  const [pin, setPin] = useState<PinnedLocation | null>(null);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [uploading, setUploading] = useState(false);
@@ -333,7 +335,12 @@ export default function SubmitForm() {
     formData.set('business_name', values.business_name.trim());
     formData.set('tagline', values.tagline.trim());
     formData.set('address', (address?.address ?? values.address).trim());
-    formData.set('address_json', JSON.stringify(address));
+    formData.set('address_json', JSON.stringify({
+      ...(address ?? {}),
+      // Map pin takes priority for coordinates (user fine-tuned it).
+      lat: pin?.lat ?? address?.lat ?? null,
+      lng: pin?.lng ?? address?.lng ?? null,
+    }));
     formData.set('locality', values.locality.trim());
     formData.set('website', values.website.trim());
     formData.set('description', values.description.trim());
@@ -365,6 +372,7 @@ export default function SubmitForm() {
         setImages([]);
         setCity(null);
         setAddress(null);
+        setPin(null);
         setAmenities([]);
         setErrors({});
         setStep(1);
@@ -805,6 +813,8 @@ export default function SubmitForm() {
                     setAddress(a);
                     // Mirror into the values store for submit + review.
                     set('address', a?.address ?? '');
+                    // Sync the map pin to the resolved coordinates.
+                    setPin(a?.lat != null && a?.lng != null ? { lat: a.lat, lng: a.lng } : null);
                     setErrors((prev) => ({ ...prev, address: undefined }));
                   }}
                   biasLat={city?.lat}
@@ -833,6 +843,22 @@ export default function SubmitForm() {
                 placeholder="e.g. Mughlai · Family Dining"
                 hint="as tagline"
               />
+
+              {/* ── Map: exact location pin (draggable) ───────────── */}
+              <div className="sm:col-span-2">
+                <span className="mb-1.5 block font-body text-sm font-semibold text-ink">
+                  Pin the exact location on the map
+                </span>
+                <LocationPicker
+                  pin={pin}
+                  onPin={setPin}
+                  center={
+                    city?.lat != null && city?.lng != null
+                      ? { lat: city.lat, lng: city.lng }
+                      : null
+                  }
+                />
+              </div>
 
               <div data-error={!!errors.opening_time}>
                 <label className="mb-1.5 block font-body text-sm font-semibold text-ink">Opens</label>
