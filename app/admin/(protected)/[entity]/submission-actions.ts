@@ -1,6 +1,7 @@
 'use server';
 
 import { getAdminClient } from '@/lib/supabase';
+import { approveSubmissionViaApi, rejectSubmissionViaApi } from '@/lib/backend';
 import { requireAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -259,10 +260,27 @@ async function convertToBusiness(
   }
 }
 
-/** Approve a single submission → creates a live business. */
+/** Approve a single submission → live business via the backend API
+ *  (role-guarded); falls back to direct Supabase only while the backend
+ *  redeploy is pending. */
 export async function approveSubmission(id: string): Promise<void> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const client = getAdminClient();
+
+  try {
+    await approveSubmissionViaApi(id, session.jwt);
+    revalidatePath('/admin/submissions');
+    revalidatePath('/admin/businesses');
+    redirect('/admin/submissions?approved=1');
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    // Backend not deployed yet (404-style) → legacy direct path.
+    if (!message.includes('Cannot') && !message.includes('404')) {
+      redirect(`/admin/submissions?error=${encodeURIComponent(message || 'Approval failed')}`);
+    }
+  }
+
+  // Legacy fallback (remove after backend redeploy).
   const { data: submission } = await client
     .from('business_submissions')
     .select('*')
@@ -324,9 +342,20 @@ export async function approveSubmissionsBulk(ids: string[]): Promise<void> {
   redirect(`/admin/submissions?approved=${encodeURIComponent(message)}`);
 }
 
-/** Reject a submission with an optional admin note. */
+/** Reject a submission with an optional admin note (backend first). */
 export async function rejectSubmission(id: string, note?: string): Promise<void> {
-  await requireAdmin();
+  const session = await requireAdmin();
+  try {
+    await rejectSubmissionViaApi(id, session.jwt, note);
+    revalidatePath('/admin/submissions');
+    redirect('/admin/submissions?rejected=1');
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (!message.includes('Cannot') && !message.includes('404')) {
+      redirect(`/admin/submissions?error=${encodeURIComponent(message || 'Reject failed')}`);
+    }
+  }
+  // Legacy fallback.
   await getAdminClient()
     .from('business_submissions')
     .update({
@@ -335,7 +364,6 @@ export async function rejectSubmission(id: string, note?: string): Promise<void>
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', id);
-
   revalidatePath('/admin/submissions');
   redirect('/admin/submissions?rejected=1');
 }

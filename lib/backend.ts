@@ -116,3 +116,113 @@ export function createBusiness(
     body: JSON.stringify(dto),
   }).then(r => r.data);
 }
+
+// ── Admin API (requires admin JWT; backend enforces role = 'admin') ───
+
+const ENTITY_KEY_MAP: Record<string, string> = {
+  cities: 'cities',
+  categories: 'categories',
+  businesses: 'businesses',
+  offers: 'offers',
+  places: 'places',
+  users: 'users',
+  reviews: 'reviews',
+  notifications: 'notifications',
+  'business-claims': 'business-claims',
+  submissions: 'submissions',
+};
+
+function assertEntityKey(entityKey: string): string {
+  const mapped = ENTITY_KEY_MAP[entityKey];
+  if (!mapped) throw new Error(`Unknown entity "${entityKey}"`);
+  return mapped;
+}
+
+export function adminList(
+  entityKey: string,
+  params: { page?: number; limit?: number; q?: string; orderBy?: string; order?: 'asc' | 'desc' },
+  jwt: string,
+): Promise<{ items: Record<string, unknown>[]; total: number }> {
+  const q = new URLSearchParams();
+  if (params.page) q.set('page', String(params.page));
+  if (params.limit) q.set('limit', String(params.limit));
+  if (params.q) q.set('q', params.q);
+  if (params.orderBy) q.set('orderBy', params.orderBy);
+  if (params.order) q.set('order', params.order);
+  return call<Record<string, unknown>[]>(
+    `/admin/${assertEntityKey(entityKey)}?${q.toString()}`,
+    { headers: { Authorization: `Bearer ${jwt}` } },
+  ).then(({ data, pagination }) => ({
+    items: Array.isArray(data) ? data : [],
+    total: pagination?.total ?? (Array.isArray(data) ? data.length : 0),
+  }));
+}
+
+export function adminGet(
+  entityKey: string,
+  id: string,
+  jwt: string,
+): Promise<Record<string, unknown>> {
+  return call<Record<string, unknown>>(`/admin/${assertEntityKey(entityKey)}/${id}`, {
+    headers: { Authorization: `Bearer ${jwt}` },
+  }).then(r => r.data);
+}
+
+export function adminCreate(
+  entityKey: string,
+  payload: Record<string, unknown>,
+  jwt: string,
+): Promise<Record<string, unknown>> {
+  return call<Record<string, unknown>>(`/admin/${assertEntityKey(entityKey)}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${jwt}` },
+    body: JSON.stringify(payload),
+  }).then(r => r.data);
+}
+
+export function adminUpdate(
+  entityKey: string,
+  id: string,
+  payload: Record<string, unknown>,
+  jwt: string,
+): Promise<Record<string, unknown>> {
+  return call<Record<string, unknown>>(`/admin/${assertEntityKey(entityKey)}/${id}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${jwt}` },
+    body: JSON.stringify(payload),
+  }).then(r => r.data);
+}
+
+export function adminDelete(
+  entityKey: string,
+  id: string,
+  jwt: string,
+): Promise<{ id: string; deleted?: boolean; deactivated?: boolean }> {
+  return call<{ id: string; deleted?: boolean; deactivated?: boolean }>(
+    `/admin/${assertEntityKey(entityKey)}/${id}`,
+    { method: 'DELETE', headers: { Authorization: `Bearer ${jwt}` } },
+  ).then(r => r.data);
+}
+
+// ── Submission approve/reject via the backend API ──────────────────────
+
+export function approveSubmissionViaApi(
+  submissionId: string,
+  jwt: string,
+): Promise<{ businessId: string; slug: string; created: boolean }> {
+  return call<{ businessId: string; slug: string; created: boolean }>(
+    `/admin/submissions/${submissionId}/approve`,
+    { method: 'POST', headers: { Authorization: `Bearer ${jwt}` } },
+  ).then(r => r.data);
+}
+
+export function rejectSubmissionViaApi(
+  submissionId: string,
+  jwt: string,
+  note?: string,
+): Promise<{ id: string; rejected: boolean }> {
+  return call<{ id: string; rejected: boolean }>(
+    `/admin/submissions/${submissionId}/reject`,
+    { method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: JSON.stringify({ note }) },
+  ).then(r => r.data);
+}

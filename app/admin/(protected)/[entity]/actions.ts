@@ -1,6 +1,7 @@
 'use server';
 
 import { getAdminClient } from '@/lib/supabase';
+import { adminCreate, adminUpdate, adminDelete } from '@/lib/backend';
 import { requireAdmin } from '@/lib/auth';
 import { getEntity } from '@/lib/entities';
 import { formToPayload } from '@/lib/data';
@@ -42,9 +43,20 @@ export async function updateRow(entityKey: string, id: string, form: FormData): 
 }
 
 export async function deleteRow(entityKey: string, id: string): Promise<void> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const entity = getEntity(entityKey);
   if (!entity) throw new Error('Unknown entity');
+
+  try {
+    await adminDelete(entityKey, id, session.jwt);
+    revalidatePath(`/admin/${entityKey}`);
+    redirect(`/admin/${entityKey}?deleted=1`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (!message.includes('Cannot') && !message.includes('404')) {
+      redirect(`/admin/${entityKey}?error=${encodeURIComponent(message)}`);
+    }
+  }
 
   const { error } = await getAdminClient().from(entity.table).delete().eq('id', id);
   revalidatePath(`/admin/${entityKey}`);
