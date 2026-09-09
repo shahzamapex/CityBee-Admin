@@ -5,6 +5,7 @@ import { submitBusiness } from './actions';
 import { getUploadSignature } from './upload-actions';
 import { getCategories, type DbCategory } from './category-actions';
 import CityAutocomplete, { type SelectedCity } from './city-autocomplete';
+import AddressAutocomplete, { type SelectedAddress } from './address-autocomplete';
 import Combobox from './combobox';
 import { getSuggestions, type FieldSuggestions } from './suggestion-actions';
 
@@ -142,6 +143,7 @@ export default function SubmitForm() {
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [city, setCity] = useState<SelectedCity | null>(null);
+  const [address, setAddress] = useState<SelectedAddress | null>(null);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES);
   const [uploading, setUploading] = useState(false);
@@ -330,7 +332,8 @@ export default function SubmitForm() {
     formData.set('category', category);
     formData.set('business_name', values.business_name.trim());
     formData.set('tagline', values.tagline.trim());
-    formData.set('address', values.address.trim());
+    formData.set('address', (address?.address ?? values.address).trim());
+    formData.set('address_json', JSON.stringify(address));
     formData.set('locality', values.locality.trim());
     formData.set('website', values.website.trim());
     formData.set('description', values.description.trim());
@@ -361,6 +364,7 @@ export default function SubmitForm() {
         setCountry(COUNTRIES[0]);
         setImages([]);
         setCity(null);
+        setAddress(null);
         setAmenities([]);
         setErrors({});
         setStep(1);
@@ -795,18 +799,19 @@ export default function SubmitForm() {
               </div>
 
               <div data-error={!!errors.address}>
-                <label htmlFor="address" className="mb-1.5 block font-body text-sm font-semibold text-ink">
-                  Full address <span className="text-brand">*</span>
-                </label>
-                <input
-                  id="address"
-                  value={values.address}
-                  onChange={(e) => set('address', e.target.value)}
-                  maxLength={200}
-                  className={inputCls('address')}
-                  placeholder="Shop no, street, landmark"
+                <AddressAutocomplete
+                  value={address}
+                  onChange={(a) => {
+                    setAddress(a);
+                    // Mirror into the values store for submit + review.
+                    set('address', a?.address ?? '');
+                    setErrors((prev) => ({ ...prev, address: undefined }));
+                  }}
+                  biasLat={city?.lat}
+                  biasLng={city?.lng}
+                  error={errors.address}
+                  required
                 />
-                <FieldError msg={errors.address} />
               </div>
 
               <Combobox

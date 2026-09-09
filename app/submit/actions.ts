@@ -60,6 +60,31 @@ interface SelectedCity {
   placeId: string;
 }
 
+/** Parsed Google-Places address selection (business's own coords). */
+interface SelectedAddress {
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  placeId: string;
+}
+
+function sanitizeAddress(raw: string): SelectedAddress | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<SelectedAddress>;
+    if (typeof parsed?.address !== 'string' || parsed.address.length < 4) {
+      return null;
+    }
+    return {
+      address: parsed.address.slice(0, 200),
+      lat: typeof parsed.lat === 'number' ? parsed.lat : null,
+      lng: typeof parsed.lng === 'number' ? parsed.lng : null,
+      placeId: typeof parsed.placeId === 'string' && /^ChIJ/.test(parsed.placeId) ? parsed.placeId : '',
+    };
+  } catch {
+    return null;
+  }
+}
+
 function sanitizeCity(raw: string): SelectedCity | null {
   try {
     const parsed = JSON.parse(raw) as Partial<SelectedCity>;
@@ -141,6 +166,7 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
   }
 
   const city = sanitizeCity(get('city_json'));
+  const bizAddress = sanitizeAddress(get('address_json'));
   if (!city) {
     return { ok: false, error: 'Please select your city from the suggestions.' };
   }
@@ -164,7 +190,10 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
     tagline: get('tagline'),
     description: get('description'),
     phone: `${country_code}${digits}`,
-    address: get('address'),
+    address: bizAddress?.address ?? get('address'),
+    biz_lat: bizAddress?.lat ?? null,
+    biz_lng: bizAddress?.lng ?? null,
+    biz_place_id: bizAddress?.placeId || null,
     locality: get('locality') || null,
     city_slug: city.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
     city_name: city.name,

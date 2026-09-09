@@ -37,6 +37,9 @@ interface SubmissionRow {
   city_lat?: number | null;
   city_lng?: number | null;
   city_place_id?: string | null;
+  biz_lat?: number | null;
+  biz_lng?: number | null;
+  biz_place_id?: string | null;
 }
 
 /**
@@ -138,20 +141,34 @@ async function convertToBusiness(
       status: 'approved',
       is_verified: false,
       is_pure_veg: submission.veg_type === 'veg',
-      // Geo: PostGIS point from the city coordinates resolved via Google
-      // Places on the public form. geography(Point,4326) — WKT string.
-      // NOTE: google_place_id stays null here — that column carries the
-      // BUSINESS's own place id and has a unique index; the city's id is
-      // stored on the cities row (and city_id links to it).
-      location:
-        submission.city_lat != null && submission.city_lng != null
-          ? `POINT(${submission.city_lng} ${submission.city_lat})`
-          : null,
+      // Geo: PostGIS point — prefer the BUSINESS's own coordinates from the
+      // address autocomplete; fall back to the city center. WKT string.
+      location: (() => {
+        const lat = submission.biz_lat ?? submission.city_lat;
+        const lng = submission.biz_lng ?? submission.city_lng;
+        return lat != null && lng != null ? `POINT(${lng} ${lat})` : null;
+      })(),
     })
     .select('id')
     .single();
 
   if (insertError) throw new Error(insertError.message);
+
+  // Business's own Google Place ID (unique index — claim only if free).
+  if (submission.biz_place_id) {
+    const { data: claimed } = await client
+      .from('businesses')
+      .select('id')
+      .eq('google_place_id', submission.biz_place_id)
+      .neq('id', business.id)
+      .maybeSingle();
+    if (!claimed) {
+      await client
+        .from('businesses')
+        .update({ google_place_id: submission.biz_place_id })
+        .eq('id', business.id);
+    }
+  }
 
   // Category link.
   if (submission.category_slug) {
