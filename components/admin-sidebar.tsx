@@ -17,6 +17,7 @@ const ICONS: Record<string, string> = {
   reviews: 'reviews',
   notifications: 'notifications',
   'business-claims': 'gavel',
+  'bulk-import': 'cloud_upload',
 };
 
 /**

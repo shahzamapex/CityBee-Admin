@@ -22,6 +22,7 @@ export function getSidebarGroups(): SidebarGroup[] {
         { key: 'dashboard', href: '/admin', label: 'Overview Dashboard' },
         { key: 'submissions', href: '/admin/submissions', label: 'Submissions' },
         { key: 'businesses', href: '/admin/businesses', label: 'Businesses' },
+        { key: 'bulk-import', href: '/admin/bulk-import', label: 'Bulk Import' },
       ],
     },
     {
