@@ -33,6 +33,72 @@ interface SubmissionRow {
   check_out_time?: string | null;
   amenities?: string | null;
   image_urls?: string | null;
+  city_name?: string | null;
+  city_lat?: number | null;
+  city_lng?: number | null;
+  city_place_id?: string | null;
+}
+
+/**
+ * Resolves the submission's city to a `cities` row id — find-or-create:
+ *  1. Google Place ID match (exact same place),
+ *  2. slug match (old submissions),
+ *  3. name match within the same country-ish slug,
+ *  4. create a new city row with the submitted coordinates.
+ */
+async function resolveCityId(
+  client: SupabaseClient,
+  submission: SubmissionRow,
+): Promise<string | null> {
+  const slug =
+    (submission.city_slug ?? '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'moradabad';
+
+  // 1. Exact Google Place ID.
+  if (submission.city_place_id) {
+    const { data: byPlace } = await client
+      .from('cities')
+      .select('id')
+      .eq('google_place_id', submission.city_place_id)
+      .maybeSingle();
+    if (byPlace) return String(byPlace.id);
+  }
+
+  // 2/3. Slug or name match.
+  const { data: existing } = await client
+    .from('cities')
+    .select('id')
+    .or(`slug.eq.${slug},name.eq.${submission.city_name ?? slug}`)
+    .limit(1)
+    .maybeSingle();
+  if (existing) return String(existing.id);
+
+  // 4. Create the city from the submitted Places data.
+  if (submission.city_name) {
+    const { data: created, error } = await client
+      .from('cities')
+      .insert({
+        slug,
+        name: submission.city_name,
+        latitude: submission.city_lat ?? 0,
+        longitude: submission.city_lng ?? 0,
+        google_place_id: submission.city_place_id ?? null,
+        is_active: true,
+      })
+      .select('id')
+      .single();
+    if (!error && created) return String(created.id);
+  }
+
+  // Fallback: default city row.
+  const { data: fallback } = await client
+    .from('cities')
+    .select('id')
+    .eq('slug', 'moradabad')
+    .maybeSingle();
+  return fallback ? String(fallback.id) : null;
 }
 
 /**
@@ -44,11 +110,9 @@ async function convertToBusiness(
   client: SupabaseClient,
   submission: SubmissionRow,
 ): Promise<void> {
-  const { data: city } = await client
-    .from('cities')
-    .select('id')
-    .eq('slug', submission.city_slug ?? 'moradabad')
-    .maybeSingle();
+  // Resolve the city: Google Place ID first (find-or-create), then slug,
+  // then default.
+  const cityId = await resolveCityId(client, submission);
 
   const slug = String(submission.business_name)
     .toLowerCase()
@@ -69,7 +133,7 @@ async function convertToBusiness(
       website: submission.website,
       address: submission.address ?? '',
       locality: submission.locality,
-      city_id: city?.id ?? null,
+      city_id: cityId,
       opening_hours: submission.opening_hours,
       status: 'approved',
       is_verified: false,

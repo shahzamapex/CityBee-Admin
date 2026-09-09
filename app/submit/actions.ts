@@ -52,6 +52,36 @@ function sanitizeImages(raw: string): string[] {
   }
 }
 
+/** Parsed Google-Places city selection. */
+interface SelectedCity {
+  name: string;
+  lat: number | null;
+  lng: number | null;
+  placeId: string;
+}
+
+function sanitizeCity(raw: string): SelectedCity | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<SelectedCity>;
+    if (
+      typeof parsed?.name !== 'string' ||
+      parsed.name.length < 2 ||
+      typeof parsed?.placeId !== 'string' ||
+      !/^ChIJ/.test(parsed.placeId)
+    ) {
+      return null;
+    }
+    return {
+      name: parsed.name.slice(0, 80),
+      placeId: parsed.placeId,
+      lat: typeof parsed.lat === 'number' ? parsed.lat : null,
+      lng: typeof parsed.lng === 'number' ? parsed.lng : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Public server action — anyone can submit a listing request.
  * RLS (anon insert-only policy) enforces this server-side; this action
@@ -110,6 +140,11 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
     return { ok: false, error: 'Please choose the hotel type.' };
   }
 
+  const city = sanitizeCity(get('city_json'));
+  if (!city) {
+    return { ok: false, error: 'Please select your city from the suggestions.' };
+  }
+
   const experience_years = get('experience_years');
   if (experience_years && (!/^\d+$/.test(experience_years) || Number(experience_years) > 60)) {
     return { ok: false, error: 'Experience must be a number of years (0–60).' };
@@ -131,7 +166,11 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
     phone: `${country_code}${digits}`,
     address: get('address'),
     locality: get('locality') || null,
-    city_slug: get('city_slug') || 'moradabad',
+    city_slug: city.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    city_name: city.name,
+    city_lat: city.lat,
+    city_lng: city.lng,
+    city_place_id: city.placeId,
     opening_hours: open && close ? `${open} – ${close}` : null,
     website: website || null,
     // Doctor extras

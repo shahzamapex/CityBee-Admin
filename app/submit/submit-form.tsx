@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react';
 import { submitBusiness } from './actions';
 import { getUploadSignature } from './upload-actions';
+import CityAutocomplete, { type SelectedCity } from './city-autocomplete';
 
 // ── Country codes (dropdown) ──────────────────────────────────────────
 const COUNTRIES = [
@@ -75,6 +76,7 @@ export default function SubmitForm() {
   const [category, setCategory] = useState<CategorySlug | ''>('');
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [city, setCity] = useState<SelectedCity | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -164,6 +166,7 @@ export default function SubmitForm() {
     }
 
     if (!category) errs.category = 'Please choose a category.';
+    if (!city) errs.city = 'Please select your city from the list.';
     if (val('business_name').length < 2) errs.business_name = 'Business name is required.';
     if (val('address').length < 6) errs.address = 'Full address is required.';
 
@@ -199,9 +202,10 @@ export default function SubmitForm() {
       });
       return;
     }
-    // Attach uploaded images + chosen category as JSON.
+    // Attach uploaded images + chosen category + city as JSON.
     formData.set('category', category);
     formData.set('images_json', JSON.stringify(images));
+    formData.set('city_json', JSON.stringify(city));
     startTransition(async () => {
       const result = await submitBusiness(formData);
       if (result.ok) {
@@ -210,6 +214,7 @@ export default function SubmitForm() {
         setCategory('');
         setCountry(COUNTRIES[0]);
         setImages([]);
+        setCity(null);
       } else {
         setErrors({ form: result.error });
       }
@@ -324,7 +329,7 @@ export default function SubmitForm() {
       </fieldset>
 
       {/* ── STEP 3: Business basics + dynamic category fields ─── */}
-      <fieldset className="space-y-4 border-t border-stone-100 pt-5" data-error={!!(errors.business_name || errors.address || errors.opening_time || errors.website || errors.specialization || errors.hotel_type)}>
+      <fieldset className="space-y-4 border-t border-stone-100 pt-5" data-error={!!(errors.business_name || errors.address || errors.city || errors.opening_time || errors.website || errors.specialization || errors.hotel_type)}>
         <legend className="text-sm font-extrabold uppercase tracking-wide text-slate-400">
           ③ Business details{category ? ` — ${CATEGORIES.find((c) => c.slug === category)?.label.replace(/^\S+\s/, '')}` : ''}
         </legend>
@@ -440,6 +445,8 @@ export default function SubmitForm() {
         )}
 
         {/* ── Common fields ──────────────────────────────────────── */}
+        <CityAutocomplete value={city} onChange={setCity} error={errors.city} />
+
         <div>
           <label htmlFor="tagline" className="mb-1.5 block text-sm font-bold">Tagline</label>
           <input id="tagline" name="tagline" maxLength={100} className={inputCls('tagline')} placeholder="Mughlai · North Indian · Family Dining" />
@@ -449,7 +456,7 @@ export default function SubmitForm() {
           <label htmlFor="address" className="mb-1.5 block text-sm font-bold">
             Full address <span className="text-[#FF6F00]">*</span>
           </label>
-          <input id="address" name="address" maxLength={200} className={inputCls('address')} placeholder="Shop no, street, landmark, city" />
+          <input id="address" name="address" maxLength={200} className={inputCls('address')} placeholder="Shop no, street, landmark" />
           <FieldError msg={errors.address} />
         </div>
 
