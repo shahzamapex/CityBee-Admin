@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { listBusinesses, type BackendBusiness } from '@/lib/backend';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,20 +34,29 @@ const CATEGORY_META: Record<string, { emoji: string; label: string }> = {
 export default async function HomePage() {
   const client = publicClient();
 
-  // Public read via RLS: approved businesses, active categories, cities.
-  const [businessesRes, categoriesRes, cityRes] = await Promise.all([
-    client
+  // Businesses come from the CityBee backend API (Cloud Run) — enriched
+  // with images/verification; taxonomy reads stay direct on Supabase (RLS).
+  let businesses: BackendBusiness[] = [];
+  try {
+    const res = await listBusinesses({ limit: 8, city: 'moradabad' });
+    businesses = res.items;
+  } catch {
+    // Backend unreachable → fall back to direct RLS read so the page
+    // never breaks.
+    const { data } = await client
       .from('businesses')
       .select('name, tagline, kind, locality, rating, review_count, is_verified')
       .eq('status', 'approved')
       .order('is_featured', { ascending: false })
       .order('rating', { ascending: false })
-      .limit(8),
+      .limit(8);
+    businesses = (data ?? []) as unknown as BackendBusiness[];
+  }
+  const [categoriesRes, cityRes] = await Promise.all([
     client.from('categories').select('slug, name').eq('is_active', true).order('sort_order').limit(10),
     client.from('cities').select('name, state_region').eq('is_active', true).limit(1),
   ]);
 
-  const businesses = businessesRes.data ?? [];
   const categories = categoriesRes.data ?? [];
   const city = cityRes.data?.[0];
 
@@ -178,23 +188,23 @@ export default async function HomePage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="rounded-full bg-brand-soft px-2.5 py-1 font-body text-[11px] font-bold uppercase tracking-wide text-brand">
-                      {biz.kind}
+                      {String(biz.kind ?? '')}
                     </span>
-                    {biz.is_verified && (
+                    {Boolean(biz.is_verified) && (
                       <span className="text-[11px] font-bold text-green-600">✓ Verified</span>
                     )}
                   </div>
                   <h3 className="mt-3 line-clamp-1 font-extrabold">{biz.name}</h3>
                   <p className="mt-1 line-clamp-2 text-xs font-medium text-ink-soft">
-                    {biz.tagline || '—'}
+                    {String(biz.tagline ?? '—')}
                   </p>
                   <div className="mt-3 flex items-center justify-between border-t border-stone-100 pt-3 text-xs">
                     <span className="font-semibold text-slate-600">
-                      {biz.locality ?? '—'}
+                      {String(biz.locality ?? '—')}
                     </span>
                     {Number(biz.rating) > 0 && (
                       <span className="font-bold text-amber-600">
-                        ★ {Number(biz.rating).toFixed(1)}
+                        ★ {Number(biz.rating ?? 0).toFixed(1)}
                       </span>
                     )}
                   </div>
