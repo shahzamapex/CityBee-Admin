@@ -5,6 +5,8 @@ import { submitBusiness } from './actions';
 import { getUploadSignature } from './upload-actions';
 import { getCategories, type DbCategory } from './category-actions';
 import CityAutocomplete, { type SelectedCity } from './city-autocomplete';
+import Combobox from './combobox';
+import { getSuggestions, type FieldSuggestions } from './suggestion-actions';
 
 // ── Country codes (dropdown) ──────────────────────────────────────────
 const COUNTRIES = [
@@ -145,12 +147,20 @@ export default function SubmitForm() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dbCategories, setDbCategories] = useState<DbCategory[]>([]);
+  const [suggestions, setSuggestions] = useState<FieldSuggestions>({
+    specializations: [],
+    qualifications: [],
+    localities: [],
+    cuisines: [],
+    taglines: [],
+  });
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Categories load live from the database (admin-managed, never hard-coded).
+  // Categories + combobox suggestions load live from the database.
   useEffect(() => {
     getCategories().then(setDbCategories).catch(() => setDbCategories([]));
+    getSuggestions().then(setSuggestions).catch(() => undefined);
   }, []);
 
   const meta = CATEGORY_META[category];
@@ -592,30 +602,27 @@ export default function SubmitForm() {
               {dynamicFields === 'doctor' && (
                 <>
                   <div data-error={!!errors.specialization}>
-                    <label htmlFor="specialization" className="mb-1.5 block font-body text-sm font-semibold text-ink">
-                      Specialization <span className="text-brand">*</span>
-                    </label>
-                    <input
+                    <Combobox
                       id="specialization"
+                      label="Specialization"
                       value={values.specialization}
-                      onChange={(e) => set('specialization', e.target.value)}
-                      maxLength={80}
-                      className={inputCls('specialization')}
-                      placeholder="Dentist / Cardiologist…"
-                    />
-                    <FieldError msg={errors.specialization} />
-                  </div>
-                  <div>
-                    <label htmlFor="qualification" className="mb-1.5 block font-body text-sm font-semibold text-ink">Qualification</label>
-                    <input
-                      id="qualification"
-                      value={values.qualification}
-                      onChange={(e) => set('qualification', e.target.value)}
-                      maxLength={100}
-                      className={inputCls('qualification')}
-                      placeholder="BDS, MDS — Prosthodontics"
+                      onChange={(v) => set('specialization', v)}
+                      suggestions={suggestions.specializations}
+                      placeholder="Start typing — e.g. Dentist, Cardiologist…"
+                      required
+                      error={errors.specialization}
+                      hint="as specialization"
                     />
                   </div>
+                  <Combobox
+                    id="qualification"
+                    label="Qualification"
+                    value={values.qualification}
+                    onChange={(v) => set('qualification', v)}
+                    suggestions={suggestions.qualifications}
+                    placeholder="e.g. MBBS, MD, BDS…"
+                    hint="as qualification"
+                  />
                   <div>
                     <label htmlFor="experience_years" className="mb-1.5 block font-body text-sm font-semibold text-ink">Experience (years)</label>
                     <input
@@ -646,15 +653,15 @@ export default function SubmitForm() {
               {/* ── DYNAMIC: restaurant fields ─────────────────────── */}
               {dynamicFields === 'restaurant' && (
                 <>
-                  <div>
-                    <label htmlFor="cuisine" className="mb-1.5 block font-body text-sm font-semibold text-ink">Cuisines</label>
-                    <input
+                  <div className="sm:col-span-2">
+                    <Combobox
                       id="cuisine"
+                      label="Cuisines"
                       value={values.cuisine}
-                      onChange={(e) => set('cuisine', e.target.value)}
-                      maxLength={120}
-                      className={inputCls('cuisine')}
-                      placeholder="Mughlai, North Indian, Chinese…"
+                      onChange={(v) => set('cuisine', v)}
+                      suggestions={suggestions.cuisines}
+                      placeholder="e.g. Mughlai, North Indian, Chinese…"
+                      hint="as cuisines"
                     />
                   </div>
                   <div>
@@ -790,29 +797,25 @@ export default function SubmitForm() {
                 <FieldError msg={errors.address} />
               </div>
 
-              <div>
-                <label htmlFor="locality" className="mb-1.5 block font-body text-sm font-semibold text-ink">Area / Locality</label>
-                <input
-                  id="locality"
-                  value={values.locality}
-                  onChange={(e) => set('locality', e.target.value)}
-                  maxLength={80}
-                  className={inputCls('locality')}
-                  placeholder="Civil Lines"
-                />
-              </div>
+              <Combobox
+                id="locality"
+                label="Area / Locality"
+                value={values.locality}
+                onChange={(v) => set('locality', v)}
+                suggestions={suggestions.localities}
+                placeholder="e.g. Civil Lines"
+                hint="as locality"
+              />
 
-              <div>
-                <label htmlFor="tagline" className="mb-1.5 block font-body text-sm font-semibold text-ink">Tagline</label>
-                <input
-                  id="tagline"
-                  value={values.tagline}
-                  onChange={(e) => set('tagline', e.target.value)}
-                  maxLength={100}
-                  className={inputCls('tagline')}
-                  placeholder="Mughlai · North Indian · Family Dining"
-                />
-              </div>
+              <Combobox
+                id="tagline"
+                label="Tagline"
+                value={values.tagline}
+                onChange={(v) => set('tagline', v)}
+                suggestions={suggestions.taglines}
+                placeholder="e.g. Mughlai · Family Dining"
+                hint="as tagline"
+              />
 
               <div data-error={!!errors.opening_time} className="sm:col-span-2">
                 <label className="mb-1.5 block font-body text-sm font-semibold text-ink">Opening hours</label>
