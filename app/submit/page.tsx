@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SubmitForm from './submit-form';
+import { CityBeeMark } from '@/components/citybee-logo';
 
 /**
  * PUBLIC page — no login required (exempted from the admin middleware).
@@ -46,9 +47,7 @@ export default function SubmitPage() {
       <header className="border-b border-border-subtle bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand font-headline text-sm font-extrabold text-white shadow-sm">
-              CB
-            </div>
+            <CityBeeMark size={30} />
             <span className="font-headline text-base font-bold tracking-tight">
               City<span className="text-brand">Bee</span>
             </span>

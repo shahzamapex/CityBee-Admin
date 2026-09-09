@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { CityBeeMark } from '@/components/citybee-logo';
 
 /**
  * UrbanPulse-style fixed header: glass backdrop, quick search that
@@ -80,8 +81,8 @@ export default function AdminHeader({ pendingSubmissions }: { pendingSubmissions
             <span className="font-body text-sm font-semibold text-ink">CityBee Admin</span>
             <span className="font-body text-[11px] text-ink-soft">{pathname === '/admin' ? 'Overview' : 'Workspace'}</span>
           </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-soft font-body text-[11px] font-bold text-brand">
-            CB
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-soft">
+            <CityBeeMark size={22} />
           </div>
         </div>
       </div>

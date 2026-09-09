@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { listBusinesses, type BackendBusiness } from '@/lib/backend';
+import { CityBeeMark } from '@/components/citybee-logo';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,9 +67,7 @@ export default async function HomePage() {
       <header className="sticky top-0 z-10 border-b border-border-subtle bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand font-headline text-sm font-extrabold text-white">
-              CB
-            </div>
+            <CityBeeMark size={30} />
             <span className="text-lg font-extrabold tracking-tight">
               City<span className="text-brand">Bee</span>
             </span>
@@ -99,8 +98,8 @@ export default async function HomePage() {
       {/* ── Hero ───────────────────────────────────────────────── */}
       <section className="border-b border-brand-soft bg-gradient-to-b from-brand-soft/60 to-canvas">
         <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:py-24">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand font-headline text-xl font-extrabold text-white shadow-lg shadow-brand/25">
-            CB
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-soft shadow-lg">
+            <CityBeeMark size={44} />
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
             Discover What&apos;s Around You
@@ -238,9 +237,7 @@ export default async function HomePage() {
       <footer className="border-t border-border-subtle bg-white">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[10px] font-headline font-extrabold text-white">
-              CB
-            </div>
+            <CityBeeMark size={24} />
             <span className="text-sm font-extrabold">
               City<span className="text-brand">Bee</span>
             </span>

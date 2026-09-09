@@ -1,5 +1,6 @@
 import { isAdmin } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { CityBeeMark } from '@/components/citybee-logo';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +18,8 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-lg font-headline font-extrabold text-white shadow-[0_4px_6px_-1px_rgba(15,23,42,0.1)]">
-            CB
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-soft shadow-[0_4px_6px_-1px_rgba(30,41,59,0.08)]">
+            <CityBeeMark size={40} />
           </div>
           <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">
             City<span className="text-brand">Bee</span> Admin

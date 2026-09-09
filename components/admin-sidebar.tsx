@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getSidebarGroups } from '@/lib/sidebar-groups';
+import { CityBeeLogo } from '@/components/citybee-logo';
 
 /** Material Symbols icon per entity key (mirrors the reference portal). */
 const ICONS: Record<string, string> = {
@@ -51,7 +52,6 @@ export default function AdminSidebar({ pendingSubmissions }: { pendingSubmission
                 v2.0
               </span>
             </div>
-            <span className="-mt-0.5 font-body text-[11px] text-ink-soft">Hyperlocal Ops</span>
           </div>
         </div>
 

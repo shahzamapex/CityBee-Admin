@@ -11,7 +11,7 @@ export const metadata: Metadata = {
  *  • app/admin/(protected)/* → admin sidebar layout (auth required)
  *  • app/admin/login, app/submit → standalone public pages
  *
- * Fonts: Plus Jakarta Sans (headlines) + Inter (body) per the design spec;
+ * Fonts: Outfit (headlines) + Hanken Grotesk (body) — mirrors the Flutter app;
  * Material Symbols Outlined for icons.
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap"
           rel="stylesheet"
         />
         <link

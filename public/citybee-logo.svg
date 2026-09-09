@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120" fill="none">
+
+  <g transform="translate(10, 10)">
+
+    <path d="M50 5 C28 5 10 23 10 45 C10 75 50 100 50 100 C50 100 90 75 90 45 C90 23 72 5 50 5 Z" fill="#ff6f00"/>
+
+    <ellipse cx="50" cy="46" rx="18" ry="24" fill="#ffffff"/>
+
+    <path d="M37 40 H63 M36 50 H64 M40 60 H60"
+          stroke="#ff6f00"
+          stroke-width="4"
+          stroke-linecap="round"/>
+
+    <path d="M43 27 C40 22 36 21 34 23 M57 27 C60 22 64 21 66 23"
+          stroke="#ffffff"
+          stroke-width="3"
+          stroke-linecap="round"/>
+
+    <ellipse cx="26" cy="38" rx="12" ry="7"
+             transform="rotate(-30 26 38)"
+             fill="#ffffff"
+             opacity="0.95"/>
+
+    <ellipse cx="74" cy="38" rx="12" ry="7"
+             transform="rotate(30 74 38)"
+             fill="#ffffff"
+             opacity="0.95"/>
+
+    <circle cx="50" cy="27" r="7" fill="#ffffff"/>
+
+  </g>
+
+  <text x="120"
+        y="72"
+        font-family="system-ui, -apple-system, 'Outfit', 'Inter', sans-serif"
+        font-size="52"
+        font-weight="800"
+        fill="#ff6f00"
+        letter-spacing="-1">
+    City<tspan fill="#1e293b">Bee</tspan>
+  </text>
+
+</svg>
