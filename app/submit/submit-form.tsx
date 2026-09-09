@@ -26,17 +26,20 @@ const COUNTRIES = [
  * Category slug → business kind + emoji + dynamic-fields profile.
  * Slugs/options come from the DB; unknown slugs fall back to generic.
  */
-const CATEGORY_META: Record<string, { kind: string; emoji: string; dynamic: 'doctor' | 'restaurant' | 'hotel' | null }> = {
-  doctors: { kind: 'doctor', emoji: '🩺', dynamic: 'doctor' },
-  dining: { kind: 'restaurant', emoji: '🍕', dynamic: 'restaurant' },
-  hotels: { kind: 'hotel', emoji: '🏨', dynamic: 'hotel' },
-  salons: { kind: 'salon', emoji: '💄', dynamic: null },
-  barbers: { kind: 'salon', emoji: '💈', dynamic: null },
-  fashion: { kind: 'shop', emoji: '👗', dynamic: null },
-  grocery: { kind: 'shop', emoji: '🛒', dynamic: null },
-  malls: { kind: 'mall', emoji: '🏬', dynamic: null },
-  cinemas: { kind: 'service', emoji: '🎬', dynamic: null },
-  heritage: { kind: 'shop', emoji: '🏛️', dynamic: null },
+const CATEGORY_META: Record<
+  string,
+  { kind: string; kindLabel: string; emoji: string; dynamic: 'doctor' | 'restaurant' | 'hotel' | null }
+> = {
+  doctors: { kind: 'doctor', kindLabel: 'Doctor', emoji: '🩺', dynamic: 'doctor' },
+  dining: { kind: 'restaurant', kindLabel: 'Restaurant', emoji: '🍕', dynamic: 'restaurant' },
+  hotels: { kind: 'hotel', kindLabel: 'Hotel', emoji: '🏨', dynamic: 'hotel' },
+  salons: { kind: 'salon', kindLabel: 'Salon', emoji: '💄', dynamic: null },
+  barbers: { kind: 'salon', kindLabel: 'Barber', emoji: '💈', dynamic: null },
+  fashion: { kind: 'shop', kindLabel: 'Shop', emoji: '👗', dynamic: null },
+  grocery: { kind: 'shop', kindLabel: 'Grocery', emoji: '🛒', dynamic: null },
+  malls: { kind: 'mall', kindLabel: 'Mall', emoji: '🏬', dynamic: null },
+  cinemas: { kind: 'service', kindLabel: 'Service', emoji: '🎬', dynamic: null },
+  heritage: { kind: 'shop', kindLabel: 'Shop', emoji: '🏛️', dynamic: null },
 };
 
 // ── Opening-hours select options ──────────────────────────────────────
@@ -170,10 +173,12 @@ export default function SubmitForm() {
   const meta = CATEGORY_META[category];
   const dynamicFields = meta?.dynamic ?? null;
 
+  // Dropdown shows the KIND value; the selected slug is what gets saved.
   const categoryLabel = (slug: string): string => {
+    const meta = CATEGORY_META[slug];
+    const emoji = meta?.emoji ?? '🗂️';
     const cat = dbCategories.find((c) => c.slug === slug);
-    const emoji = CATEGORY_META[slug]?.emoji ?? '🗂️';
-    return cat ? `${emoji} ${cat.name}` : `${emoji} ${slug}`;
+    return `${emoji} ${meta?.kindLabel ?? cat?.name ?? slug}`;
   };
 
   // Controlled field setter — data survives failed submits.
@@ -332,6 +337,7 @@ export default function SubmitForm() {
     formData.set('country_code', country.code);
     formData.set('whatsapp', values.whatsapp.trim());
     formData.set('category', category);
+    formData.set('kind', CATEGORY_META[category]?.kind ?? 'service');
     formData.set('business_name', values.business_name.trim());
     formData.set('tagline', values.tagline.trim());
     formData.set('address', (address?.address ?? values.address).trim());

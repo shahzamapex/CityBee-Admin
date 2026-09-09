@@ -7,6 +7,9 @@ export interface SubmitResult {
   error?: string;
 }
 
+/** Valid business kinds (mirrors the backend DTO). */
+const KINDS = ['restaurant', 'doctor', 'hotel', 'salon', 'shop', 'mall', 'service'];
+
 /** Category slug → business kind (single picklist drives both). */
 const CATEGORY_KIND: Record<string, string> = {
   dining: 'restaurant',
@@ -185,7 +188,8 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
     submitter_phone: `${country_code}${digits}`,
     submitter_email: email || null,
     business_name,
-    kind: CATEGORY_KIND[category],
+    // Kind from the form (set by the category selection); validated fallback.
+    kind: KINDS.includes(get('kind')) ? get('kind') : (CATEGORY_KIND[category] ?? 'service'),
     category_slug: category,
     tagline: get('tagline'),
     description: get('description'),
