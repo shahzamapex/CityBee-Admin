@@ -138,6 +138,15 @@ async function convertToBusiness(
       status: 'approved',
       is_verified: false,
       is_pure_veg: submission.veg_type === 'veg',
+      // Geo: PostGIS point from the city coordinates resolved via Google
+      // Places on the public form. geography(Point,4326) — WKT string.
+      // NOTE: google_place_id stays null here — that column carries the
+      // BUSINESS's own place id and has a unique index; the city's id is
+      // stored on the cities row (and city_id links to it).
+      location:
+        submission.city_lat != null && submission.city_lng != null
+          ? `POINT(${submission.city_lng} ${submission.city_lat})`
+          : null,
     })
     .select('id')
     .single();

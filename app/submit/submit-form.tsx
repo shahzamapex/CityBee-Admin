@@ -453,7 +453,19 @@ export default function SubmitForm() {
         </div>
       )}
 
-      <form ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} noValidate>
+      <form
+        ref={formRef}
+        noValidate
+        onKeyDown={(e) => {
+          // Enter in a text input moves to the next step (or submits on the
+          // final step) — never a mid-wizard accidental submit.
+          if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            if (step < 3) nextStep();
+            else handleSubmit();
+          }
+        }}
+      >
         {/* ════════════ STEP 1: Category + Contact ════════════ */}
         {step === 1 && (
           <section className="space-y-4" data-error={!!(errors.category || errors.submitter_name || errors.submitter_phone || errors.submitter_email)}>
@@ -984,7 +996,8 @@ export default function SubmitForm() {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
+                onClick={() => handleSubmit()}
                 disabled={pending || uploading}
                 className="flex items-center gap-1.5 rounded-lg bg-brand px-8 py-2.5 font-body text-sm font-semibold text-white shadow-md shadow-brand/25 transition hover:bg-brand-hover disabled:opacity-60"
               >
