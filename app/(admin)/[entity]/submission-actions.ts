@@ -4,36 +4,38 @@ import { getAdminClient } from '@/lib/supabase';
 import { requireAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+interface SubmissionRow {
+  id: string;
+  business_name: string;
+  kind: string;
+  tagline: string | null;
+  description: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  website: string | null;
+  address: string | null;
+  locality: string | null;
+  city_slug: string | null;
+  category_slug: string | null;
+  opening_hours: string | null;
+}
 
 /**
- * Approve a public submission:
- *  1. Creates a real row in `businesses` (status 'pending' there too, so it
- *     goes through your existing verification flow — or set to 'approved'
- *     directly if you trust the review).
- *  2. Links business_categories when the submission named a category slug.
- *  3. Marks the submission approved with a timestamp.
+ * Shared conversion: submission row → real business (+ category link).
+ * Used by both single and bulk approve.
  */
-export async function approveSubmission(id: string): Promise<void> {
-  await requireAdmin();
-  const client = getAdminClient();
-
-  const { data: submission, error: fetchError } = await client
-    .from('business_submissions')
-    .select('*')
-    .eq('id', id)
-    .single();
-  if (fetchError || !submission) {
-    redirect(`/submissions?error=${encodeURIComponent('Submission not found')}`);
-  }
-
-  // Resolve the city from the submitted slug (falls back to null → app picks default).
+async function convertToBusiness(
+  client: SupabaseClient,
+  submission: SubmissionRow,
+): Promise<void> {
   const { data: city } = await client
     .from('cities')
     .select('id')
-    .eq('slug', submission.city_slug)
+    .eq('slug', submission.city_slug ?? 'moradabad')
     .maybeSingle();
 
-  // Generate a slug from the business name.
   const slug = String(submission.business_name)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -48,7 +50,7 @@ export async function approveSubmission(id: string): Promise<void> {
       kind: submission.kind,
       tagline: submission.tagline ?? '',
       description: submission.description ?? '',
-      phone: submission.phone ?? submission.submitter_phone,
+      phone: submission.phone,
       whatsapp: submission.whatsapp,
       website: submission.website,
       address: submission.address ?? '',
@@ -61,12 +63,9 @@ export async function approveSubmission(id: string): Promise<void> {
     .select('id')
     .single();
 
-  if (insertError) {
-    redirect(`/submissions?error=${encodeURIComponent(insertError.message)}`);
-  }
+  if (insertError) throw new Error(insertError.message);
 
-  // Attach the category when a valid slug was supplied.
-  if (submission.category_slug && business) {
+  if (submission.category_slug) {
     const { data: category } = await client
       .from('categories')
       .select('id')
@@ -79,6 +78,28 @@ export async function approveSubmission(id: string): Promise<void> {
       });
     }
   }
+}
+
+/** Approve a single submission → creates a live business. */
+export async function approveSubmission(id: string): Promise<void> {
+  await requireAdmin();
+  const client = getAdminClient();
+  const { data: submission } = await client
+    .from('business_submissions')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (!submission) {
+    redirect(`/submissions?error=${encodeURIComponent('Submission not found')}`);
+  }
+
+  try {
+    await convertToBusiness(client, submission as unknown as SubmissionRow);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Conversion failed';
+    redirect(`/submissions?error=${encodeURIComponent(message)}`);
+  }
 
   await client
     .from('business_submissions')
@@ -90,12 +111,44 @@ export async function approveSubmission(id: string): Promise<void> {
   redirect('/submissions?approved=1');
 }
 
+/** Bulk approve: converts every selected submission in one go. */
+export async function approveSubmissionsBulk(ids: string[]): Promise<void> {
+  await requireAdmin();
+  if (ids.length === 0) return;
+  const client = getAdminClient();
+
+  const { data: submissions } = await client
+    .from('business_submissions')
+    .select('*')
+    .in('id', ids)
+    .eq('status', 'pending');
+
+  let approved = 0;
+  let failed = 0;
+  for (const submission of (submissions ?? []) as unknown as SubmissionRow[]) {
+    try {
+      await convertToBusiness(client, submission);
+      await client
+        .from('business_submissions')
+        .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+        .eq('id', (submission as unknown as { id: string }).id);
+      approved++;
+    } catch {
+      failed++;
+    }
+  }
+
+  revalidatePath('/submissions');
+  revalidatePath('/businesses');
+  const message =
+    failed > 0 ? `${approved} approved, ${failed} failed` : `${approved} approved`;
+  redirect(`/submissions?approved=${encodeURIComponent(message)}`);
+}
+
 /** Reject a submission with an optional admin note. */
 export async function rejectSubmission(id: string, note?: string): Promise<void> {
   await requireAdmin();
-  const client = getAdminClient();
-
-  await client
+  await getAdminClient()
     .from('business_submissions')
     .update({
       status: 'rejected',
@@ -106,4 +159,20 @@ export async function rejectSubmission(id: string, note?: string): Promise<void>
 
   revalidatePath('/submissions');
   redirect('/submissions?rejected=1');
+}
+
+/** Bulk reject. */
+export async function rejectSubmissionsBulk(ids: string[]): Promise<void> {
+  await requireAdmin();
+  if (ids.length === 0) return;
+  await getAdminClient()
+    .from('business_submissions')
+    .update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+    })
+    .in('id', ids);
+
+  revalidatePath('/submissions');
+  redirect(`/submissions?rejected=${encodeURIComponent(`${ids.length}`)}`);
 }
