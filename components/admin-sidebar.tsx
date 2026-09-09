@@ -2,13 +2,31 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { entities } from '@/lib/entities';
+import { getSidebarGroups } from '@/lib/sidebar-groups';
+
+/** Material Symbols icon per entity key (mirrors the reference portal). */
+const ICONS: Record<string, string> = {
+  dashboard: 'space_dashboard',
+  businesses: 'storefront',
+  submissions: 'verified_user',
+  offers: 'local_offer',
+  places: 'explore',
+  cities: 'cloud_upload',
+  categories: 'category',
+  users: 'group',
+  reviews: 'reviews',
+  notifications: 'notifications',
+  'business-claims': 'gavel',
+};
 
 /**
- * Admin sidebar with active-state highlighting and modern polish.
+ * UrbanPulse-style sidebar: fixed 16rem rail, grouped sections with
+ * uppercase micro-labels, active = primary-container pill, live status
+ * footer chip, Material Symbols icons.
  */
-export default function AdminSidebar() {
+export default function AdminSidebar({ pendingSubmissions }: { pendingSubmissions: number }) {
   const pathname = usePathname();
+  const groups = getSidebarGroups();
 
   function isActive(href: string): boolean {
     if (href === '/admin') return pathname === '/admin';
@@ -16,93 +34,101 @@ export default function AdminSidebar() {
   }
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-stone-200 bg-white md:flex">
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF6F00] text-sm font-extrabold text-white shadow-sm shadow-orange-200">
-          CB
-        </div>
-        <div>
-          <div className="text-sm font-extrabold leading-tight">
-            City<span className="text-[#FF6F00]">Bee</span>
+    <aside className="fixed left-0 top-0 z-50 flex h-full w-64 flex-col justify-between overflow-y-auto border-r border-border-subtle bg-white shadow-nav">
+      <div className="flex flex-col">
+        {/* ── Brand ────────────────────────────────────────────── */}
+        <div className="flex h-16 items-center gap-3 px-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-[13px] font-extrabold text-white">
+            CB
           </div>
-          <div className="text-[11px] font-medium text-slate-400">Admin Panel</div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-headline text-[15px] font-semibold tracking-tight text-ink">
+                CityBee
+              </span>
+              <span className="rounded bg-subtle px-1.5 py-0.5 font-body text-[10px] font-semibold tracking-wide text-brand">
+                v2.0
+              </span>
+            </div>
+            <span className="-mt-0.5 font-body text-[11px] text-ink-soft">Hyperlocal Ops</span>
+          </div>
+        </div>
+
+        {/* ── Grouped nav ───────────────────────────────────────── */}
+        <div className="flex flex-col gap-6 px-3 py-4">
+          {groups.map((group) => (
+            <div key={group.title} className="flex flex-col gap-1">
+              <span className="px-2 pb-1 font-body text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                {group.title}
+              </span>
+              <nav className="flex flex-col gap-0.5">
+                {group.items.map((item) => {
+                  const active = isActive(item.href);
+                  const badge =
+                    item.key === 'submissions' && pendingSubmissions > 0 ? pendingSubmissions : null;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center justify-between rounded-lg px-3 py-2 transition-all ${
+                        active
+                          ? 'bg-brand font-semibold text-white shadow-[0_1px_3px_0_rgba(15,23,42,0.05)]'
+                          : 'text-ink-soft hover:bg-subtle hover:text-ink'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-[20px]">
+                          {ICONS[item.key] ?? 'description'}
+                        </span>
+                        <span className="font-body text-sm">{item.label}</span>
+                      </div>
+                      {badge !== null && (
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 font-body text-[10px] font-semibold leading-4 ${
+                            active
+                              ? 'bg-white/20 text-white'
+                              : 'bg-rose/10 text-rose'
+                          }`}
+                        >
+                          {badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          ))}
         </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
-        <SidebarLink href="/admin" label="Dashboard" emoji="📊" active={isActive('/admin')} />
-        {entities.map((entity) => (
-          <SidebarLink
-            key={entity.key}
-            href={`/admin/${entity.key}`}
-            label={entity.title}
-            emoji={entityIcon(entity.icon)}
-            active={isActive(`/admin/${entity.key}`)}
-          />
-        ))}
-      </nav>
-
-      <div className="border-t border-stone-200 p-3">
+      {/* ── Footer: live status + actions ──────────────────────── */}
+      <div className="sticky bottom-0 flex flex-col gap-2 bg-white p-3">
         <Link
           href="/submit"
           target="_blank"
-          className="mb-1 block rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-orange-50 hover:text-[#FF6F00]"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-ink-soft transition hover:bg-subtle hover:text-ink"
         >
-          🔗 Public Form ↗
+          <span className="material-symbols-outlined text-[20px]">open_in_new</span>
+          <span className="font-body text-sm">Public Form</span>
         </Link>
         <form action="/api/logout" method="post">
-          <button className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600">
-            ⏻ Sign out
+          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-ink-soft transition hover:bg-rose/5 hover:text-rose">
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span className="font-body text-sm">Sign out</span>
           </button>
         </form>
+        <div className="mx-1 mb-1 flex items-center justify-between rounded-xl bg-subtle px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald" />
+            <div className="flex flex-col">
+              <span className="font-body text-[12px] font-semibold text-ink">Database Live</span>
+              <span className="font-body text-[10px] tabular-nums text-ink-soft">Supabase connected</span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-[18px] text-ink-muted">dns</span>
+        </div>
       </div>
     </aside>
-  );
-}
-
-function entityIcon(icon: string): string {
-  return (
-    {
-      City: '🏙️',
-      Category: '🗂️',
-      Store: '🏪',
-      Offer: '🏷️',
-      Map: '🗺️',
-      People: '👥',
-      Star: '⭐',
-      Notifications: '🔔',
-      Verified: '✅',
-      Pending: '⏳',
-      Submission: '📥',
-    } as Record<string, string>
-  )[icon] ?? '📄';
-}
-
-function SidebarLink({
-  href,
-  label,
-  emoji,
-  active,
-}: {
-  href: string;
-  label: string;
-  emoji: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition ${
-        active
-          ? 'bg-gradient-to-r from-orange-50 to-orange-50/40 text-[#FF6F00]'
-          : 'text-slate-600 hover:bg-stone-50 hover:text-slate-900'
-      }`}
-    >
-      {active && (
-        <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[#FF6F00]" />
-      )}
-      <span className="text-base leading-none">{emoji}</span>
-      {label}
-    </Link>
   );
 }

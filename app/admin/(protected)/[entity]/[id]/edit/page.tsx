@@ -40,39 +40,39 @@ export default async function EditEntityPage({
       <div className="mb-6">
         <Link
           href={`/admin/${entity.key}/${id}`}
-          className="text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
+          className="font-body text-xs font-semibold text-ink-muted transition hover:text-brand"
         >
           ← Back to {entity.singular}
         </Link>
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
+        <h1 className="mt-2 font-headline text-2xl font-semibold tracking-tight text-ink">
           Edit {entity.singular}
         </h1>
-        <p className="mt-1 text-sm font-medium text-slate-500">
+        <p className="mt-0.5 font-body text-sm text-ink-soft">
           {String(row[entity.nameField] ?? '')}
         </p>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+        <div className="mb-4 rounded-lg border border-rose/25 bg-rose/10 px-4 py-2.5 font-body text-sm font-semibold text-rose">
           {error}
         </div>
       )}
 
       <form
         action={submit}
-        className="space-y-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
+        className="space-y-6 rounded-xl border border-border-subtle bg-white p-6 shadow-sm"
       >
         <EntityForm entity={entity} row={row} uuidOptions={uuidOptions} />
         <div className="flex justify-end gap-3 border-t border-stone-100 pt-5">
           <Link
             href={`/admin/${entity.key}`}
-            className="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:border-stone-400"
+            className="rounded-lg border border-border-strong bg-white px-5 py-2.5 font-body text-sm font-semibold text-ink transition hover:bg-subtle"
           >
             Cancel
           </Link>
           <button
             type="submit"
-            className="rounded-xl bg-[#FF6F00] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100] active:scale-[0.98]"
+            className="rounded-lg bg-brand px-6 py-2.5 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
           >
             Save Changes
           </button>

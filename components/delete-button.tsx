@@ -25,7 +25,7 @@ export default function DeleteButton({
     return (
       <button
         onClick={() => setConfirming(true)}
-        className="ml-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-red-500 transition hover:bg-red-50"
+        className="ml-1 rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-rose transition hover:bg-rose/10"
       >
         Delete
       </button>
@@ -37,7 +37,7 @@ export default function DeleteButton({
       <button
         disabled={pending}
         onClick={() => startTransition(() => deleteAction(entityKey, id))}
-        className="rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-50"
+        className="rounded-lg bg-rose px-2.5 py-1.5 font-body text-xs font-semibold text-white transition hover:bg-rose/80 disabled:opacity-50"
         title={`Permanently delete "${name}"`}
       >
         {pending ? 'Deleting…' : 'Confirm'}

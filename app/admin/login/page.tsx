@@ -12,26 +12,26 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FF6F00] text-2xl font-extrabold text-white shadow-lg shadow-orange-200">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-lg font-headline font-extrabold text-white shadow-[0_4px_6px_-1px_rgba(15,23,42,0.1)]">
             CB
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            City<span className="text-[#FF6F00]">Bee</span> Admin
+          <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">
+            City<span className="text-brand">Bee</span> Admin
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Sign in to manage the CityBee backend
+          <p className="mt-1 font-body text-sm text-ink-soft">
+            Hyperlocal operations portal — sign in to continue
           </p>
         </div>
 
         <form
           action="/api/login"
           method="post"
-          className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-border-subtle bg-white p-6 shadow-[0_1px_3px_0_rgba(15,23,42,0.05),0_1px_2px_-1px_rgba(15,23,42,0.05)]"
         >
-          <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="password" className="mb-1.5 block font-body text-sm font-semibold text-ink">
             Admin password
           </label>
           <input
@@ -40,25 +40,28 @@ export default async function LoginPage({
             type="password"
             required
             autoFocus
-            className="mt-2 w-full rounded-xl border border-stone-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#FF6F00] focus:ring-2 focus:ring-[#FF6F00]/20"
+            className="h-9.5 w-full rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15"
             placeholder="••••••••••••"
           />
           {error && (
-            <p className="mt-2 text-sm font-medium text-red-600">
+            <p className="mt-2 font-body text-sm font-semibold text-rose">
               Incorrect password. Try again.
             </p>
           )}
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-[#FF6F00] py-2.5 text-sm font-bold text-white transition hover:bg-[#E65100] active:scale-[0.98]"
+            className="mt-5 w-full rounded-lg bg-brand py-2.5 font-body text-sm font-semibold text-white shadow-[0_1px_3px_0_rgba(15,23,42,0.08)] transition hover:bg-brand-hover"
           >
             Sign In
           </button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Set ADMIN_PASSWORD in your environment variables.
-        </p>
+        <div className="mt-5 flex items-center justify-center gap-2 rounded-lg border border-border-subtle bg-subtle px-4 py-3">
+          <span className="h-2 w-2 rounded-full bg-emerald" />
+          <span className="font-body text-xs font-semibold text-ink-soft">
+            Secured portal · 12-hour sessions
+          </span>
+        </div>
       </div>
     </div>
   );

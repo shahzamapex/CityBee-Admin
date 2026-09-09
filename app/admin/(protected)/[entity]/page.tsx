@@ -37,18 +37,19 @@ export default async function EntityListPage({ params, searchParams }: PageProps
   const listFields = entity.fields.filter((f) => f.inList);
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-[1600px]">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3 py-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">{entity.title}</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">{entity.description}</p>
+          <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">{entity.title}</h1>
+          <p className="mt-0.5 font-body text-sm text-ink-soft">{entity.description}</p>
         </div>
         <Link
           href={`/admin/${entity.key}/new`}
-          className="rounded-xl bg-[#FF6F00] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100] active:scale-[0.98]"
+          className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
         >
-          + New {entity.singular}
+          <span className="material-symbols-outlined text-[18px]">add</span>
+          New {entity.singular}
         </Link>
       </div>
 
@@ -61,27 +62,30 @@ export default async function EntityListPage({ params, searchParams }: PageProps
 
       {/* ── Search + count ──────────────────────────────────── */}
       <form className="mb-4 flex items-center gap-3" action={`/admin/${entity.key}`}>
-        <input
-          type="search"
-          name="q"
-          defaultValue={query.q ?? ''}
-          placeholder={`Search ${entity.title.toLowerCase()}…`}
-          className="w-64 rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-sm outline-none transition focus:border-[#FF6F00] focus:ring-2 focus:ring-[#FF6F00]/20"
-        />
-        <button className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-bold text-slate-600 transition hover:border-[#FF6F00] hover:text-[#FF6F00]">
+        <div className="relative flex items-center">
+          <span className="material-symbols-outlined absolute left-3 text-[18px] text-ink-muted">search</span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={query.q ?? ''}
+            placeholder={`Search ${entity.title.toLowerCase()}…`}
+            className="h-9.5 w-72 rounded-lg border border-border-strong bg-white py-2 pl-9 pr-3.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15"
+          />
+        </div>
+        <button className="rounded-lg border border-border-strong bg-white px-4 py-2 font-body text-sm font-semibold text-ink transition hover:bg-subtle">
           Search
         </button>
-        <span className="ml-auto text-xs font-semibold text-slate-400">
+        <span className="ml-auto font-body text-xs font-semibold text-ink-muted">
           {count} total
         </span>
       </form>
 
       {/* ── Table ───────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-200 bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+              <tr className="border-b border-border-subtle bg-canvas text-left font-body text-[11px] font-bold uppercase tracking-wide text-ink-soft">
                 {listFields.map((field) => (
                   <th key={field.name} className="px-4 py-3">
                     {field.label}
@@ -95,7 +99,7 @@ export default async function EntityListPage({ params, searchParams }: PageProps
                 <tr>
                   <td
                     colSpan={listFields.length + 1}
-                    className="px-4 py-12 text-center text-sm font-medium text-slate-400"
+                    className="px-4 py-12 text-center font-body text-sm text-ink-muted"
                   >
                     {query.q
                       ? `No ${entity.title.toLowerCase()} match "${query.q}".`
@@ -106,7 +110,7 @@ export default async function EntityListPage({ params, searchParams }: PageProps
               {rows.map((row) => (
                 <tr
                   key={String(row.id)}
-                  className="border-b border-stone-100 last:border-0 hover:bg-orange-50/40"
+                  className="border-b border-border-subtle/60 last:border-0 hover:bg-canvas"
                 >
                   {listFields.map((field) => (
                     <td key={field.name} className="px-4 py-3 align-middle">
@@ -124,13 +128,13 @@ export default async function EntityListPage({ params, searchParams }: PageProps
                     )}
                     <Link
                       href={`/admin/${entity.key}/${row.id}`}
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-stone-100 hover:text-[#FF6F00]"
+                      className="rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-ink-soft transition hover:bg-subtle hover:text-ink"
                     >
                       View
                     </Link>
                     <Link
                       href={`/admin/${entity.key}/${row.id}/edit`}
-                      className="ml-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#FF6F00] transition hover:bg-orange-100"
+                      className="ml-1 rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-brand transition hover:bg-brand-soft/50"
                     >
                       Edit
                     </Link>
@@ -154,18 +158,18 @@ export default async function EntityListPage({ params, searchParams }: PageProps
           {page > 1 && (
             <Link
               href={`/admin/${entity.key}?page=${page - 1}${query.q ? `&q=${encodeURIComponent(query.q)}` : ''}`}
-              className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-[#FF6F00] hover:text-[#FF6F00]"
+              className="rounded-lg border border-border-strong bg-white px-3 py-1.5 font-body text-xs font-semibold text-ink transition hover:bg-subtle"
             >
               ← Prev
             </Link>
           )}
-          <span className="text-xs font-semibold text-slate-400">
+          <span className="font-body text-xs font-semibold text-ink-muted">
             Page {page} of {totalPages}
           </span>
           {page < totalPages && (
             <Link
               href={`/admin/${entity.key}?page=${page + 1}${query.q ? `&q=${encodeURIComponent(query.q)}` : ''}`}
-              className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-[#FF6F00] hover:text-[#FF6F00]"
+              className="rounded-lg border border-border-strong bg-white px-3 py-1.5 font-body text-xs font-semibold text-ink transition hover:bg-subtle"
             >
               Next →
             </Link>
@@ -189,11 +193,11 @@ function CellValue({
 
   if (field.listPill) {
     return value ? (
-      <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-600">
+      <span className="inline-flex items-center rounded-full border border-emerald/20 bg-emerald/10 px-2 py-0.5 font-body text-[11px] font-semibold text-emerald">
         Yes
       </span>
     ) : (
-      <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-bold text-slate-400">
+      <span className="inline-flex items-center rounded-full border border-border-subtle bg-subtle px-2 py-0.5 font-body text-[11px] font-semibold text-ink-muted">
         No
       </span>
     );
@@ -201,23 +205,25 @@ function CellValue({
 
   if (field.type === 'uuid') {
     const label = lookups[field.name]?.[String(value)];
-    return <span className="font-medium">{label ?? (value ? '…' : '—')}</span>;
+    return <span className="font-body font-medium text-ink">{label ?? (value ? '…' : '—')}</span>;
   }
 
   if (field.type === 'select' && typeof value === 'string') {
+    // UrbanPulse badge system: soft fills + saturated text + hairline border.
     const tone: Record<string, string> = {
-      approved: 'bg-green-50 text-green-700',
-      active: 'bg-green-50 text-green-700',
-      pending: 'bg-amber-50 text-amber-700',
-      draft: 'bg-stone-100 text-slate-500',
-      rejected: 'bg-red-50 text-red-600',
-      expired: 'bg-stone-100 text-slate-400',
-      inactive: 'bg-stone-100 text-slate-400',
-      admin: 'bg-orange-50 text-[#FF6F00]',
+      approved: 'border-emerald/20 bg-emerald/10 text-emerald',
+      active: 'border-emerald/20 bg-emerald/10 text-emerald',
+      pending: 'border-amber/25 bg-amber/10 text-amber',
+      draft: 'border-border-subtle bg-subtle text-ink-soft',
+      rejected: 'border-rose/20 bg-rose/10 text-rose',
+      expired: 'border-border-subtle bg-subtle text-ink-muted',
+      inactive: 'border-border-subtle bg-subtle text-ink-muted',
+      admin: 'border-brand/25 bg-brand-soft text-brand',
+      veg: 'border-emerald/20 bg-emerald/10 text-emerald',
     };
-    const cls = tone[value] ?? 'bg-stone-100 text-slate-600';
+    const cls = tone[value] ?? 'border-border-subtle bg-subtle text-ink-soft';
     return (
-      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${cls}`}>
+      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-body text-[11px] font-semibold ${cls}`}>
         {field.options?.find((o) => o.value === value)?.label ?? value}
       </span>
     );
@@ -229,7 +235,7 @@ function CellValue({
       : String(value);
   return (
     <span
-      className={`line-clamp-1 ${field.name === 'name' || field.name === 'title' ? 'font-semibold' : 'text-slate-600'}`}
+      className={`line-clamp-1 font-body ${field.name === 'name' || field.name === 'title' || field.name === 'business_name' ? 'font-semibold text-ink' : 'text-ink-soft'}`}
       title={text}
     >
       {text}
@@ -240,10 +246,10 @@ function CellValue({
 function Banner({ tone, children }: { tone: 'success' | 'error'; children: React.ReactNode }) {
   const cls =
     tone === 'success'
-      ? 'border-green-200 bg-green-50 text-green-700'
-      : 'border-red-200 bg-red-50 text-red-700';
+      ? 'border-emerald/25 bg-emerald/10 text-emerald'
+      : 'border-rose/25 bg-rose/10 text-rose';
   return (
-    <div className={`mb-4 rounded-xl border px-4 py-2.5 text-sm font-semibold ${cls}`}>
+    <div className={`mb-4 rounded-lg border px-4 py-2.5 font-body text-sm font-semibold ${cls}`}>
       {children}
     </div>
   );

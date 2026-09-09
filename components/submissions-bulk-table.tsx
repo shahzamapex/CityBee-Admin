@@ -73,9 +73,9 @@ export default function BulkReviewTable({
     <div>
       {/* ── Bulk action bar ─────────────────────────────────── */}
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <span className="text-sm font-extrabold">
+        <span className="font-body text-sm font-bold">
           Pending requests
-          <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+          <span className="ml-2 rounded-full bg-amber/10 px-2 py-0.5 font-body text-xs font-semibold text-amber">
             {pendingCount}
           </span>
         </span>
@@ -83,14 +83,14 @@ export default function BulkReviewTable({
           <button
             onClick={bulkApprove}
             disabled={selected.size === 0 || pendingApi}
-            className="rounded-xl bg-green-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-40"
+            className="rounded-xl bg-emerald px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-emerald/80 disabled:opacity-40"
           >
             ✓ Approve Selected{selected.size > 0 ? ` (${selected.size})` : ''}
           </button>
           <button
             onClick={bulkReject}
             disabled={selected.size === 0 || pendingApi}
-            className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-bold text-red-500 transition hover:bg-red-50 disabled:opacity-40"
+            className="rounded-xl border border-rose/25 bg-white px-4 py-2 font-body text-sm font-semibold text-rose transition hover:bg-rose/10 disabled:opacity-40"
           >
             Reject Selected{selected.size > 0 ? ` (${selected.size})` : ''}
           </button>
@@ -98,17 +98,17 @@ export default function BulkReviewTable({
       </div>
 
       {/* ── Table ───────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-200 bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+              <tr className="border-b border-border-subtle bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleAll}
-                    className="h-4 w-4 accent-[#FF6F00]"
+                    className="h-4 w-4 accent-brand"
                     aria-label="Select all"
                   />
                 </th>
@@ -124,7 +124,7 @@ export default function BulkReviewTable({
             <tbody>
               {pending.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm font-medium text-slate-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm font-medium text-ink-muted">
                     {pendingApi ? 'Working…' : 'No pending requests — all caught up! 🎉'}
                   </td>
                 </tr>
@@ -132,8 +132,8 @@ export default function BulkReviewTable({
               {pending.map((row) => (
                 <tr
                   key={row.id}
-                  className={`border-b border-stone-100 last:border-0 ${
-                    selected.has(row.id) ? 'bg-orange-50/60' : 'hover:bg-orange-50/40'
+                  className={`border-b border-border-subtle/60 last:border-0 ${
+                    selected.has(row.id) ? 'bg-brand-soft/40' : 'hover:bg-canvas'
                   }`}
                 >
                   <td className="px-4 py-3">
@@ -141,30 +141,30 @@ export default function BulkReviewTable({
                       type="checkbox"
                       checked={selected.has(row.id)}
                       onChange={() => toggle(row.id)}
-                      className="h-4 w-4 accent-[#FF6F00]"
+                      className="h-4 w-4 accent-brand"
                       aria-label={`Select ${row.business_name}`}
                     />
                   </td>
                   <td className="px-4 py-3 font-semibold">{row.business_name}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {row.kind}
                     {row.category_slug ? ` · ${row.category_slug}` : ''}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {row.submitter_name}
-                    <div className="text-xs text-slate-400">{row.submitter_phone}</div>
+                    <div className="text-xs text-ink-muted">{row.submitter_phone}</div>
                   </td>
-                  <td className="max-w-48 truncate px-4 py-3 text-slate-600" title={row.address}>
+                  <td className="max-w-48 truncate px-4 py-3 text-ink-soft" title={row.address}>
                     {row.address || '—'}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{row.opening_hours || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-slate-400">
+                  <td className="px-4 py-3 text-ink-soft">{row.opening_hours || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-ink-muted">
                     {new Date(row.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/submissions/${row.id}`}
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-[#FF6F00]"
+                      className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-brand"
                     >
                       View
                     </Link>

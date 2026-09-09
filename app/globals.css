@@ -1,16 +1,95 @@
 @import "tailwindcss";
 
+/* ── UrbanPulse design tokens (from DESIGN.md) ─────────────────────── */
 :root {
-  --background: #fafaf8;
-  --foreground: #1e293b;
+  /* Surface architecture */
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --subtle: #f1f5f9;
+
+  /* Structure */
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Functional accents */
+  --primary: #4338ca;
+  --primary-hover: #3730a3;
+  --secondary: #0d9488;
+  --success: #10b981;
+  --amber: #f59e0b;
+  --rose: #ef4444;
+
+  /* Ink */
+  --ink: #0b1c30;
+  --ink-soft: #464554;
+  --ink-muted: #94a3b8;
+
+  /* Text */
+  --background: #f8fafc;
+  --foreground: #0b1c30;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* Named tokens matching the reference classes */
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-subtle: #f1f5f9;
+  --color-border-subtle: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-brand: #4338ca;
+  --color-brand-hover: #3730a3;
+  --color-brand-soft: #e3dfff;
+  --color-teal: #0d9488;
+  --color-teal-soft: #ccfbf1;
+  --color-emerald: #10b981;
+  --color-amber: #f59e0b;
+  --color-rose: #ef4444;
+
+  --color-ink: #0b1c30;
+  --color-ink-soft: #464554;
+  --color-ink-muted: #94a3b8;
+
+  --font-headline: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Tabular figures for data alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Elevation levels (indigo-slate tinted, from DESIGN.md) ─────────── */
+.elev-1 {
+  box-shadow:
+    0 1px 3px 0 rgba(15, 23, 42, 0.05),
+    0 1px 2px -1px rgba(15, 23, 42, 0.05);
+}
+.elev-2 {
+  box-shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.07),
+    0 2px 4px -2px rgba(15, 23, 42, 0.05);
+}
+.elev-3 {
+  box-shadow:
+    0 10px 15px -3px rgba(15, 23, 42, 0.08),
+    0 4px 6px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* Sidebar/nav soft shadow */
+.shadow-nav {
+  box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
 }

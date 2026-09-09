@@ -37,25 +37,25 @@ function FieldInput({
   options?: { value: string; label: string }[];
 }) {
   const inputCls =
-    'w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#FF6F00] focus:ring-2 focus:ring-[#FF6F00]/20';
+    'w-full rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15';
   const strValue =
     value === null || value === undefined ? '' : String(value);
 
   return (
     <div>
-      <label htmlFor={field.name} className="mb-1.5 block text-sm font-bold text-slate-700">
+      <label htmlFor={field.name} className="mb-1.5 block font-body text-sm font-semibold text-ink">
         {field.label}
-        {field.required && <span className="ml-0.5 text-[#FF6F00]">*</span>}
+        {field.required && <span className="ml-0.5 text-brand">*</span>}
       </label>
 
       {field.type === 'boolean' ? (
-        <label className="flex items-center gap-2.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-600">
+        <label className="flex items-center gap-2.5 rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm font-medium text-ink-soft">
           <input
             id={field.name}
             name={field.name}
             type="checkbox"
             defaultChecked={value === true}
-            className="h-4 w-4 accent-[#FF6F00]"
+            className="h-4 w-4 accent-brand"
           />
           {value === true ? 'Enabled' : 'Disabled'}
         </label>
@@ -106,7 +106,7 @@ function FieldInput({
       )}
 
       {field.help && (
-        <p className="mt-1 text-xs font-medium text-slate-400">{field.help}</p>
+        <p className="mt-1 font-body text-xs text-ink-muted">{field.help}</p>
       )}
     </div>
   );

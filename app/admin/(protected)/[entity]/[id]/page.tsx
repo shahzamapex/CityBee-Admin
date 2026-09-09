@@ -27,12 +27,12 @@ export default async function ViewEntityPage({
       <div className="mb-6">
         <Link
           href={`/admin/${entity.key}`}
-          className="text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
+          className="font-body text-xs font-semibold text-ink-muted transition hover:text-brand"
         >
           ← Back to {entity.title}
         </Link>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight">
+          <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">
             {String(row[entity.nameField] ?? entity.singular)}
           </h1>
           <div className="flex gap-2">
@@ -46,18 +46,18 @@ export default async function ViewEntityPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
         <table className="w-full text-sm">
           <tbody>
             <tr className="border-b border-stone-100">
-              <th className="w-40 bg-stone-50 px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-400">
+              <th className="w-40 bg-canvas px-4 py-3 text-left font-body text-[11px] font-bold uppercase tracking-wide text-ink-soft">
                 ID
               </th>
-              <td className="px-4 py-3 font-mono text-xs text-slate-500">{String(row.id)}</td>
+              <td className="px-4 py-3 font-body text-xs tabular-nums text-ink-soft">{String(row.id)}</td>
             </tr>
             {entity.fields.map((field) => (
               <tr key={field.name} className="border-b border-stone-100 last:border-0">
-                <th className="w-40 bg-stone-50 px-4 py-3 text-left align-top text-xs font-bold uppercase tracking-wide text-slate-400">
+                <th className="w-40 bg-canvas px-4 py-3 text-left align-top font-body text-[11px] font-bold uppercase tracking-wide text-ink-soft">
                   {field.label}
                 </th>
                 <td className="px-4 py-3">
@@ -66,17 +66,17 @@ export default async function ViewEntityPage({
               </tr>
             ))}
             <tr className="border-t border-stone-100 bg-stone-50/50">
-              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-slate-300">
+              <th className="px-4 py-2.5 text-left font-body text-[11px] font-bold uppercase tracking-wide text-ink-muted">
                 Created
               </th>
-              <td className="px-4 py-2.5 text-xs text-slate-400">{created}</td>
+              <td className="px-4 py-2.5 font-body text-xs text-ink-muted">{created}</td>
             </tr>
             {row.updated_at !== undefined && (
               <tr className="bg-stone-50/50">
-                <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-slate-300">
+                <th className="px-4 py-2.5 text-left font-body text-[11px] font-bold uppercase tracking-wide text-ink-muted">
                   Updated
                 </th>
-                <td className="px-4 py-2.5 text-xs text-slate-400">{updated}</td>
+                <td className="px-4 py-2.5 font-body text-xs text-ink-muted">{updated}</td>
               </tr>
             )}
           </tbody>
@@ -99,7 +99,7 @@ function ViewValue({
     return (
       <span
         className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${
-          value ? 'bg-green-50 text-green-700' : 'bg-stone-100 text-slate-400'
+          value ? 'bg-emerald/10 text-emerald' : 'bg-subtle text-ink-muted'
         }`}
       >
         {value ? 'Yes' : 'No'}
@@ -126,8 +126,8 @@ function ViewValue({
   }
 
   if (value === null || value === undefined || value === '') {
-    return <span className="text-slate-300">—</span>;
+    return <span className="text-ink-muted">—</span>;
   }
 
-  return <span className="whitespace-pre-wrap text-slate-700">{String(value)}</span>;
+  return <span className="whitespace-pre-wrap text-ink-soft">{String(value)}</span>;
 }

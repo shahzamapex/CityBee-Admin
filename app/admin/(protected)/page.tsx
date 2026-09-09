@@ -6,84 +6,115 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = { title: 'Dashboard — CityBee Admin' };
+export const metadata = { title: 'Operations Overview — CityBee Admin' };
 
 export default async function DashboardPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   const data = await getDashboardData();
   const { kpis } = data;
 
+  const totalForTrend = kpis.totalBusinesses + kpis.totalPlaces;
+
   return (
-    <div className="mx-auto max-w-6xl">
-      {/* ── Header ────────────────────────────────────────────── */}
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Welcome back — here&apos;s what&apos;s happening with CityBee today.
+    <div className="mx-auto max-w-[1600px]">
+      {/* ── Page header ───────────────────────────────────────── */}
+      <section className="flex flex-col justify-between gap-4 py-6 md:flex-row md:items-center">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">
+              Operations Overview
+            </h1>
+            <span className="rounded bg-teal-soft px-2 py-0.5 font-body text-[10px] font-semibold uppercase tracking-wider text-teal">
+              Live Data
+            </span>
+          </div>
+          <p className="font-body text-sm text-ink-soft">
+            Real-time performance across {kpis.totalCities} active cities and{' '}
+            {totalForTrend.toLocaleString()} listings
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/submissions"
-            className="rounded-xl bg-[#FF6F00] px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:bg-[#E65100]"
+            className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
           >
-            📥 Review Submissions
+            <span className="material-symbols-outlined text-[18px]">inbox</span>
+            Review Submissions
             {kpis.pendingSubmissions > 0 && (
-              <span className="ml-2 rounded-full bg-white/25 px-2 py-0.5 text-xs font-extrabold tabular-nums">
+              <span className="rounded-full bg-white/25 px-1.5 py-0.5 font-body text-xs font-bold tabular-nums">
                 {kpis.pendingSubmissions}
               </span>
             )}
           </Link>
           <Link
             href="/admin/businesses/new"
-            className="rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#FF6F00] hover:text-[#FF6F00]"
+            className="flex items-center gap-1.5 rounded-lg border border-border-strong bg-white px-4 py-2 font-body text-sm font-semibold text-ink transition hover:bg-subtle"
           >
-            + Business
+            <span className="material-symbols-outlined text-[18px]">storefront</span>
+            Add Business
           </Link>
         </div>
-      </div>
+      </section>
 
-      {/* ── KPI cards ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      {/* ── KPI metric cards (5) ───────────────────────────────── */}
+      <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard
-          emoji="🏪"
-          label="Businesses"
+          icon="storefront"
+          label="Active Businesses"
           value={kpis.totalBusinesses}
-          sub={`${kpis.totalCities} cities`}
-          gradient="from-orange-500 to-amber-500"
-        />
-        <KpiCard
-          emoji="📥"
-          label="New Submissions"
-          value={kpis.pendingSubmissions}
-          sub={kpis.pendingSubmissions > 0 ? 'awaiting review' : 'all caught up'}
-          gradient="from-blue-500 to-sky-400"
-          href="/admin/submissions"
-          alert={kpis.pendingSubmissions > 0}
-        />
-        <KpiCard
-          emoji="⏳"
-          label="Pending Approval"
-          value={kpis.pendingBusinesses}
-          sub="businesses"
-          gradient="from-amber-500 to-yellow-400"
+          tone="brand"
           href="/admin/businesses"
-          alert={kpis.pendingBusinesses > 0}
+          footer={
+            <span className="font-body text-xs text-ink-soft">
+              {kpis.totalCities} cities covered
+            </span>
+          }
         />
         <KpiCard
-          emoji="🏷️"
+          icon="inbox"
+          label="Pending Submissions"
+          value={kpis.pendingSubmissions}
+          tone={kpis.pendingSubmissions > 0 ? 'rose' : 'muted'}
+          href="/admin/submissions"
+          footer={
+            kpis.pendingSubmissions > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded bg-rose/10 px-1.5 py-0.5 font-body text-[11px] font-semibold text-rose">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose" />
+                Awaiting review
+              </span>
+            ) : (
+              <span className="font-body text-xs text-ink-soft">All caught up</span>
+            )
+          }
+        />
+        <KpiCard
+          icon="local_offer"
           label="Active Offers"
           value={kpis.activeOffers}
-          sub="live deals"
-          gradient="from-emerald-500 to-teal-400"
+          tone="teal"
           href="/admin/offers"
+          footer={<span className="font-body text-xs text-ink-soft">live deals</span>}
         />
-      </div>
+        <KpiCard
+          icon="verified"
+          label="Pending Approvals"
+          value={kpis.pendingBusinesses}
+          tone="amber"
+          href="/admin/businesses"
+          footer={<span className="font-body text-xs text-ink-soft">businesses</span>}
+        />
+        <KpiCard
+          icon="star"
+          label="Total Reviews"
+          value={kpis.totalReviews}
+          tone="muted"
+          href="/admin/reviews"
+          footer={<span className="font-body text-xs text-ink-soft">{kpis.totalUsers} users</span>}
+        />
+      </section>
 
-      {/* ── Charts row ────────────────────────────────────────── */}
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
-        {/* Donut: businesses by status */}
+      {/* ── Charts row ─────────────────────────────────────────── */}
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Business Overview" subtitle="By approval status">
           {data.businessesByStatus.length > 0 ? (
             <StatusDonut data={data.businessesByStatus} />
@@ -92,12 +123,10 @@ export default async function DashboardPage() {
           )}
         </Card>
 
-        {/* Area: submissions trend */}
         <Card title="Submission Activity" subtitle="Last 14 days">
           <SubmissionsArea data={data.submissionsTrend} />
         </Card>
 
-        {/* Bars: businesses by category */}
         <Card title="Top Categories" subtitle="Businesses per category">
           {data.businessesByCategory.length > 0 ? (
             <CategoryBars data={data.businessesByCategory} />
@@ -107,19 +136,17 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* ── Secondary KPIs + recent activity ──────────────────── */}
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
-        {/* Secondary stats */}
-        <Card title="Catalog" subtitle="Everything else">
-          <div className="space-y-3">
-            <MiniStat emoji="🗺️" label="Places" value={kpis.totalPlaces} href="/admin/places" />
-            <MiniStat emoji="👥" label="Users" value={kpis.totalUsers} href="/admin/users" />
-            <MiniStat emoji="⭐" label="Reviews" value={kpis.totalReviews} href="/admin/reviews" />
-            <MiniStat emoji="🏙️" label="Cities" value={kpis.totalCities} href="/admin/cities" />
+      {/* ── Catalog + recent activity ──────────────────────────── */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <Card title="Catalog" subtitle="Content inventory">
+          <div className="space-y-2.5">
+            <MiniStat icon="explore" label="Places" value={kpis.totalPlaces} href="/admin/places" />
+            <MiniStat icon="group" label="Users" value={kpis.totalUsers} href="/admin/users" />
+            <MiniStat icon="star" label="Reviews" value={kpis.totalReviews} href="/admin/reviews" />
+            <MiniStat icon="cloud_upload" label="Cities" value={kpis.totalCities} href="/admin/cities" />
           </div>
         </Card>
 
-        {/* Recent submissions */}
         <div className="lg:col-span-2">
           <Card title="Latest Submissions" subtitle="Newest requests from the public form">
             {data.recentSubmissions.length === 0 ? (
@@ -130,24 +157,24 @@ export default async function DashboardPage() {
                   <Link
                     key={sub.id}
                     href={`/admin/submissions/${sub.id}`}
-                    className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-orange-50/60"
+                    className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition hover:bg-canvas"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-sm">
-                      {kindEmoji(sub.kind)}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                      <span className="material-symbols-outlined text-[18px]">{kindIcon(sub.kind)}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-bold">{sub.business_name}</div>
-                      <div className="text-xs font-medium text-slate-400">
-                        by {sub.submitter_name} · {timeAgo(sub.created_at)}
+                      <div className="truncate font-body text-sm font-semibold text-ink">{sub.business_name}</div>
+                      <div className="font-body text-xs text-ink-soft">
+                        {sub.submitter_name} · {timeAgo(sub.created_at)}
                       </div>
                     </div>
                     <StatusPill status={sub.status} />
-                    <span className="text-slate-300">›</span>
+                    <span className="material-symbols-outlined text-[18px] text-ink-muted">chevron_right</span>
                   </Link>
                 ))}
                 <Link
                   href="/admin/submissions"
-                  className="mt-2 block rounded-xl px-2 py-2 text-center text-xs font-bold text-[#FF6F00] transition hover:bg-orange-50"
+                  className="mt-2 block rounded-lg px-2 py-2 text-center font-body text-xs font-semibold text-brand transition hover:bg-brand-soft/40"
                 >
                   View all submissions →
                 </Link>
@@ -162,47 +189,53 @@ export default async function DashboardPage() {
 
 // ── Building blocks ──────────────────────────────────────────────
 
+const TONES: Record<string, { box: string; text: string; value: string }> = {
+  brand: { box: 'bg-subtle text-brand', text: 'text-ink-soft', value: 'text-ink' },
+  teal: { box: 'bg-teal-soft text-teal', text: 'text-ink-soft', value: 'text-ink' },
+  amber: { box: 'bg-amber/10 text-amber', text: 'text-ink-soft', value: 'text-amber' },
+  rose: { box: 'bg-rose/10 text-rose', text: 'text-ink-soft', value: 'text-rose' },
+  muted: { box: 'bg-subtle text-ink-soft', text: 'text-ink-soft', value: 'text-ink' },
+};
+
 function KpiCard({
-  emoji,
+  icon,
   label,
   value,
-  sub,
-  gradient,
+  tone,
   href,
-  alert,
+  footer,
 }: {
-  emoji: string;
+  icon: string;
   label: string;
   value: number;
-  sub: string;
-  gradient: string;
-  href?: string;
-  alert?: boolean;
+  tone: keyof typeof TONES;
+  href: string;
+  footer: React.ReactNode;
 }) {
-  const inner = (
-    <div className="group relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:shadow-md">
-      <div
-        className={`absolute -right-6 -top-6 h-20 w-20 rounded-full bg-gradient-to-br ${gradient} opacity-10 transition group-hover:opacity-20`}
-      />
-      {alert && value > 0 && (
-        <span className="absolute right-4 top-4 flex h-2.5 w-2.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
-        </span>
-      )}
-      <div
-        className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-lg text-white shadow-sm`}
-      >
-        {emoji}
+  const t = TONES[tone] ?? TONES.muted;
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col justify-between overflow-hidden rounded-xl border border-border-subtle bg-white p-4 shadow-sm transition hover:shadow-md"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col">
+          <span className="font-body text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
+            {label}
+          </span>
+          <span className={`mt-1 font-headline text-[32px] font-bold leading-10 tabular-nums tracking-tight ${t.value}`}>
+            {value}
+          </span>
+        </div>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors group-hover:bg-brand group-hover:text-white ${t.box}`}
+        >
+          <span className="material-symbols-outlined text-[22px]">{icon}</span>
+        </div>
       </div>
-      <div className="mt-3 text-3xl font-extrabold tabular-nums tracking-tight">{value}</div>
-      <div className="mt-0.5 text-xs font-bold uppercase tracking-wide text-slate-400">
-        {label}
-      </div>
-      <div className="mt-0.5 text-xs font-medium text-slate-400">{sub}</div>
-    </div>
+      <div className="mt-4 flex items-center gap-1.5">{footer}</div>
+    </Link>
   );
-  return href ? <Link href={href}>{inner}</Link> : inner;
 }
 
 function Card({
@@ -215,23 +248,23 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-      <div className="mb-4">
-        <h3 className="text-sm font-extrabold tracking-tight">{title}</h3>
-        <p className="text-xs font-medium text-slate-400">{subtitle}</p>
+    <div className="rounded-xl border border-border-subtle bg-white shadow-sm">
+      <div className="border-b border-border-subtle/60 px-5 pb-3 pt-4">
+        <h3 className="font-headline text-base font-semibold tracking-tight text-ink">{title}</h3>
+        <p className="font-body text-xs text-ink-soft">{subtitle}</p>
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </div>
   );
 }
 
 function MiniStat({
-  emoji,
+  icon,
   label,
   value,
   href,
 }: {
-  emoji: string;
+  icon: string;
   label: string;
   value: number;
   href: string;
@@ -239,25 +272,23 @@ function MiniStat({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/60 px-3.5 py-2.5 transition hover:border-[#FF6F00]/30 hover:bg-orange-50/50"
+      className="flex items-center gap-3 rounded-lg border border-border-subtle bg-canvas px-3.5 py-2.5 transition hover:border-brand/30 hover:bg-brand-soft/30"
     >
-      <span className="text-lg">{emoji}</span>
-      <span className="text-sm font-bold text-slate-600">{label}</span>
-      <span className="ml-auto text-lg font-extrabold tabular-nums">{value}</span>
+      <span className="material-symbols-outlined text-[18px] text-brand">{icon}</span>
+      <span className="font-body text-sm font-semibold text-ink-soft">{label}</span>
+      <span className="ml-auto font-headline text-lg font-bold tabular-nums text-ink">{value}</span>
     </Link>
   );
 }
 
 function StatusPill({ status }: { status: string }) {
   const tone: Record<string, string> = {
-    pending: 'bg-amber-50 text-amber-600',
-    approved: 'bg-green-50 text-green-600',
-    rejected: 'bg-red-50 text-red-500',
+    pending: 'bg-amber/10 text-amber',
+    approved: 'bg-emerald/10 text-emerald',
+    rejected: 'bg-rose/10 text-rose',
   };
   return (
-    <span
-      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${tone[status] ?? 'bg-stone-100 text-slate-500'}`}
-    >
+    <span className={`shrink-0 rounded-full px-2.5 py-0.5 font-body text-[11px] font-semibold ${tone[status] ?? 'bg-subtle text-ink-soft'}`}>
       {status}
     </span>
   );
@@ -265,16 +296,16 @@ function StatusPill({ status }: { status: string }) {
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-stone-200 text-sm font-medium text-slate-400">
+    <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-border-subtle font-body text-sm text-ink-muted">
       {children}
     </div>
   );
 }
 
-function kindEmoji(kind: string): string {
+function kindIcon(kind: string): string {
   return (
-    { restaurant: '🍕', doctor: '🩺', hotel: '🏨', salon: '💄', shop: '🏪', mall: '🏬' } as Record<string, string>
-  )[kind] ?? '📄';
+    { restaurant: 'restaurant', doctor: 'medical_services', hotel: 'hotel', salon: 'spa', shop: 'storefront', mall: 'local_mall' } as Record<string, string>
+  )[kind] ?? 'description';
 }
 
 function timeAgo(iso: string): string {
