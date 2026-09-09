@@ -1,0 +1,133 @@
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { getEntity, type Field } from '@/lib/entities';
+import { getRow } from '@/lib/data';
+import { resolveLookups } from '@/lib/data';
+
+export const dynamic = 'force-dynamic';
+
+export default async function ViewEntityPage({
+  params,
+}: {
+  params: Promise<{ entity: string; id: string }>;
+}) {
+  const { entity: entityKey, id } = await params;
+  const entity = getEntity(entityKey);
+  if (!entity) notFound();
+
+  const row = await getRow(entityKey, id);
+  if (!row) notFound();
+
+  const lookups = await resolveLookups(entity, [row]);
+  const created = row.created_at ? new Date(String(row.created_at)).toLocaleString() : '—';
+  const updated = row.updated_at ? new Date(String(row.updated_at)).toLocaleString() : '—';
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-6">
+        <Link
+          href={`/${entity.key}`}
+          className="text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
+        >
+          ← Back to {entity.title}
+        </Link>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            {String(row[entity.nameField] ?? entity.singular)}
+          </h1>
+          <div className="flex gap-2">
+            <Link
+              href={`/${entity.key}/${id}/edit`}
+              className="rounded-xl bg-[#FF6F00] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100]"
+            >
+              Edit
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <tbody>
+            <tr className="border-b border-stone-100">
+              <th className="w-40 bg-stone-50 px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-400">
+                ID
+              </th>
+              <td className="px-4 py-3 font-mono text-xs text-slate-500">{String(row.id)}</td>
+            </tr>
+            {entity.fields.map((field) => (
+              <tr key={field.name} className="border-b border-stone-100 last:border-0">
+                <th className="w-40 bg-stone-50 px-4 py-3 text-left align-top text-xs font-bold uppercase tracking-wide text-slate-400">
+                  {field.label}
+                </th>
+                <td className="px-4 py-3">
+                  <ViewValue field={field} value={row[field.name]} lookups={lookups} />
+                </td>
+              </tr>
+            ))}
+            <tr className="border-t border-stone-100 bg-stone-50/50">
+              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-slate-300">
+                Created
+              </th>
+              <td className="px-4 py-2.5 text-xs text-slate-400">{created}</td>
+            </tr>
+            {row.updated_at !== undefined && (
+              <tr className="bg-stone-50/50">
+                <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-slate-300">
+                  Updated
+                </th>
+                <td className="px-4 py-2.5 text-xs text-slate-400">{updated}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function ViewValue({
+  field,
+  value,
+  lookups,
+}: {
+  field: Field;
+  value: unknown;
+  lookups: Record<string, Record<string, string>>;
+}) {
+  if (field.type === 'boolean') {
+    return (
+      <span
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${
+          value ? 'bg-green-50 text-green-700' : 'bg-stone-100 text-slate-400'
+        }`}
+      >
+        {value ? 'Yes' : 'No'}
+      </span>
+    );
+  }
+
+  if (field.type === 'uuid') {
+    const label = lookups[field.name]?.[String(value)];
+    return <span className="font-medium">{label ?? '—'}</span>;
+  }
+
+  if (field.type === 'url' && typeof value === 'string' && value) {
+    return (
+      <a
+        href={value}
+        target="_blank"
+        rel="noreferrer"
+        className="break-all font-medium text-[#FF6F00] underline decoration-orange-200"
+      >
+        {value}
+      </a>
+    );
+  }
+
+  if (value === null || value === undefined || value === '') {
+    return <span className="text-slate-300">—</span>;
+  }
+
+  return <span className="whitespace-pre-wrap text-slate-700">{String(value)}</span>;
+}

@@ -1,69 +1,90 @@
-import Image from "next/image";
+import { getAdminClient } from '@/lib/supabase';
+import { isAdmin } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { entities, statCards } from '@/lib/entities';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+interface Counts {
+  [table: string]: number | 'error';
+}
+
+async function fetchCounts(): Promise<Counts> {
+  const client = getAdminClient();
+  const results = await Promise.all(
+    statCards.map(async (card) => {
+      let query = client.from(card.table).select('id', { count: 'exact', head: true });
+      if (card.where) {
+        const [col, , value] = card.where.split('.');
+        query = query.eq(col, value);
+      }
+      const { count, error } = await query;
+      return [card.label, error ? 'error' : (count ?? 0)] as const;
+    }),
+  );
+  return Object.fromEntries(results);
+}
+
+export default async function DashboardPage() {
+  if (!(await isAdmin())) redirect('/login');
+  const counts = await fetchCounts();
+
+  const emojiFor: Record<string, string> = {
+    Store: '🏪',
+    Pending: '⏳',
+    Offer: '🏷️',
+    Map: '🗺️',
+    People: '👥',
+    Star: '⭐',
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-6">
+        <h1 className="text-2xl font-extrabold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm font-medium text-slate-500">
+          Overview of the CityBee backend — quick links to every management area.
+        </p>
+      </header>
+
+      {/* ── Stat cards ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {statCards.map((card) => (
+          <div
+            key={card.label}
+            className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="text-xl">{emojiFor[card.icon] ?? '📄'}</div>
+            <div className="mt-2 text-2xl font-extrabold tabular-nums">
+              {counts[card.label] === 'error' ? '—' : counts[card.label]}
+            </div>
+            <div className="text-xs font-semibold text-slate-500">{card.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Quick actions ──────────────────────────────────────── */}
+      <h2 className="mt-10 text-sm font-extrabold uppercase tracking-wide text-slate-400">
+        Manage
+      </h2>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {entities.map((entity) => (
+          <Link
+            key={entity.key}
+            href={`/${entity.key}`}
+            className="group rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-[#FF6F00]/40 hover:shadow-md"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold group-hover:text-[#FF6F00]">{entity.title}</h3>
+              <span className="text-slate-300 transition group-hover:text-[#FF6F00]">→</span>
+            </div>
+            <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-500">
+              {entity.description}
+            </p>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
