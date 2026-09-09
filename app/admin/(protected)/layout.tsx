@@ -23,11 +23,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
-          <SidebarLink href="/" label="Dashboard" emoji="📊" />
+          <SidebarLink href="/admin" label="Dashboard" emoji="📊" />
           {entities.map((entity) => (
             <SidebarLink
               key={entity.key}
-              href={`/${entity.key}`}
+              href={`/admin/${entity.key}`}
               label={entity.title}
               emoji={entityIcon(entity.icon)}
             />
@@ -66,9 +66,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </form>
         </div>
         <div className="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-4 py-2 md:hidden">
-          <MobileLink href="/" label="Dashboard" />
+          <MobileLink href="/admin" label="Dashboard" />
           {entities.map((entity) => (
-            <MobileLink key={entity.key} href={`/${entity.key}`} label={entity.title} />
+            <MobileLink key={entity.key} href={`/admin/${entity.key}`} label={entity.title} />
           ))}
         </div>
         <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>

@@ -25,7 +25,7 @@ export default function SubmitPage() {
             </span>
           </div>
           <Link
-            href="/login"
+            href="/admin"
             className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
           >
             Admin

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   approveSubmissionsBulk,
   rejectSubmissionsBulk,
-} from '@/app/(admin)/[entity]/submission-actions';
+} from '@/app/admin/(protected)/[entity]/submission-actions';
 
 export interface PendingSubmission {
   id: string;

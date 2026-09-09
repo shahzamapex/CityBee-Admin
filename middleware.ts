@@ -2,17 +2,16 @@ import { NextResponse } from 'next/server';
 import { adminCookieName, isValidSession } from '@/lib/session';
 
 /**
- * Edge middleware: protects every route except /login and static assets.
- * Runs before any server component touches the service-role client.
+ * Edge middleware: everything public stays public (/, /submit, /api/*).
+ * Only /admin/* requires a session — except /admin/login itself.
+ * Without a session, admin pages redirect to /admin/login (no sidebar
+ * is ever rendered for unauthenticated visitors).
  */
 export async function middleware(request: Request) {
   const { pathname } = new URL(request.url);
-  // Public routes and auth API routes must stay reachable without a session.
-  if (
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/submit') ||
-    pathname.startsWith('/api/login')
-  ) {
+
+  const isAdminArea = pathname === '/admin' || pathname.startsWith('/admin/');
+  if (!isAdminArea || pathname === '/admin/login') {
     return NextResponse.next();
   }
 
@@ -24,7 +23,7 @@ export async function middleware(request: Request) {
   const value = match ? decodeURIComponent(match.slice(adminCookieName().length + 1)) : undefined;
 
   if (!(await isValidSession(value))) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/admin/login', request.url));
   }
   return NextResponse.next();
 }

@@ -26,7 +26,7 @@ export default async function ViewEntityPage({
     <div className="mx-auto max-w-2xl">
       <div className="mb-6">
         <Link
-          href={`/${entity.key}`}
+          href={`/admin/${entity.key}`}
           className="text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
         >
           ← Back to {entity.title}
@@ -37,7 +37,7 @@ export default async function ViewEntityPage({
           </h1>
           <div className="flex gap-2">
             <Link
-              href={`/${entity.key}/${id}/edit`}
+              href={`/admin/${entity.key}/${id}/edit`}
               className="rounded-xl bg-[#FF6F00] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100]"
             >
               Edit

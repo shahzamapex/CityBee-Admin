@@ -111,7 +111,7 @@ export default async function SubmissionsPage({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={`/submissions/${String(row.id)}`}
+                        href={`/admin/submissions/${String(row.id)}`}
                         className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-[#FF6F00]"
                       >
                         View

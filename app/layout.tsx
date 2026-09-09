@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 /**
  * Minimal root layout — page chrome lives in route groups:
- *  • app/(admin)/* → admin sidebar layout
+ *  • app/admin/(protected)/* → admin sidebar layout (auth required)
  *  • app/login, app/submit → standalone public pages
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -15,11 +15,11 @@ export async function createRow(entityKey: string, form: FormData): Promise<void
   const payload = formToPayload(entity, form, true);
 
   const { error } = await getAdminClient().from(entity.table).insert(payload);
-  revalidatePath(`/${entityKey}`);
+  revalidatePath(`/admin/${entityKey}`);
   if (error) {
-    redirect(`/${entityKey}/new?error=${encodeURIComponent(error.message)}`);
+    redirect(`/admin/${entityKey}/new?error=${encodeURIComponent(error.message)}`);
   }
-  redirect(`/${entityKey}?created=1`);
+  redirect(`/admin/${entityKey}?created=1`);
 }
 
 export async function updateRow(entityKey: string, id: string, form: FormData): Promise<void> {
@@ -33,12 +33,12 @@ export async function updateRow(entityKey: string, id: string, form: FormData): 
     .update(payload)
     .eq('id', id);
 
-  revalidatePath(`/${entityKey}`);
+  revalidatePath(`/admin/${entityKey}`);
   revalidatePath(`/${entityKey}/${id}`);
   if (error) {
-    redirect(`/${entityKey}/${id}/edit?error=${encodeURIComponent(error.message)}`);
+    redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(error.message)}`);
   }
-  redirect(`/${entityKey}?updated=1`);
+  redirect(`/admin/${entityKey}?updated=1`);
 }
 
 export async function deleteRow(entityKey: string, id: string): Promise<void> {
@@ -47,9 +47,9 @@ export async function deleteRow(entityKey: string, id: string): Promise<void> {
   if (!entity) throw new Error('Unknown entity');
 
   const { error } = await getAdminClient().from(entity.table).delete().eq('id', id);
-  revalidatePath(`/${entityKey}`);
+  revalidatePath(`/admin/${entityKey}`);
   if (error) {
-    redirect(`/${entityKey}?error=${encodeURIComponent(error.message)}`);
+    redirect(`/admin/${entityKey}?error=${encodeURIComponent(error.message)}`);
   }
-  redirect(`/${entityKey}?deleted=1`);
+  redirect(`/admin/${entityKey}?deleted=1`);
 }

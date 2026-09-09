@@ -45,7 +45,7 @@ export default async function EntityListPage({ params, searchParams }: PageProps
           <p className="mt-1 text-sm font-medium text-slate-500">{entity.description}</p>
         </div>
         <Link
-          href={`/${entity.key}/new`}
+          href={`/admin/${entity.key}/new`}
           className="rounded-xl bg-[#FF6F00] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100] active:scale-[0.98]"
         >
           + New {entity.singular}
@@ -60,7 +60,7 @@ export default async function EntityListPage({ params, searchParams }: PageProps
       {error && !query.error && <Banner tone="error">{error}</Banner>}
 
       {/* ── Search + count ──────────────────────────────────── */}
-      <form className="mb-4 flex items-center gap-3" action={`/${entity.key}`}>
+      <form className="mb-4 flex items-center gap-3" action={`/admin/${entity.key}`}>
         <input
           type="search"
           name="q"
@@ -123,13 +123,13 @@ export default async function EntityListPage({ params, searchParams }: PageProps
                       </span>
                     )}
                     <Link
-                      href={`/${entity.key}/${row.id}`}
+                      href={`/admin/${entity.key}/${row.id}`}
                       className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-stone-100 hover:text-[#FF6F00]"
                     >
                       View
                     </Link>
                     <Link
-                      href={`/${entity.key}/${row.id}/edit`}
+                      href={`/admin/${entity.key}/${row.id}/edit`}
                       className="ml-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#FF6F00] transition hover:bg-orange-100"
                     >
                       Edit
@@ -153,7 +153,7 @@ export default async function EntityListPage({ params, searchParams }: PageProps
         <div className="mt-4 flex items-center justify-center gap-2">
           {page > 1 && (
             <Link
-              href={`/${entity.key}?page=${page - 1}${query.q ? `&q=${encodeURIComponent(query.q)}` : ''}`}
+              href={`/admin/${entity.key}?page=${page - 1}${query.q ? `&q=${encodeURIComponent(query.q)}` : ''}`}
               className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-[#FF6F00] hover:text-[#FF6F00]"
             >
               ← Prev
@@ -164,7 +164,7 @@ export default async function EntityListPage({ params, searchParams }: PageProps
           </span>
           {page < totalPages && (
             <Link
-              href={`/${entity.key}?page=${page + 1}${query.q ? `&q=${encodeURIComponent(query.q)}` : ''}`}
+              href={`/admin/${entity.key}?page=${page + 1}${query.q ? `&q=${encodeURIComponent(query.q)}` : ''}`}
               className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-[#FF6F00] hover:text-[#FF6F00]"
             >
               Next →

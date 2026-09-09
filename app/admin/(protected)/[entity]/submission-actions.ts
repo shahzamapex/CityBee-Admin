@@ -91,14 +91,14 @@ export async function approveSubmission(id: string): Promise<void> {
     .single();
 
   if (!submission) {
-    redirect(`/submissions?error=${encodeURIComponent('Submission not found')}`);
+    redirect(`/admin/submissions?error=${encodeURIComponent('Submission not found')}`);
   }
 
   try {
     await convertToBusiness(client, submission as unknown as SubmissionRow);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Conversion failed';
-    redirect(`/submissions?error=${encodeURIComponent(message)}`);
+    redirect(`/admin/submissions?error=${encodeURIComponent(message)}`);
   }
 
   await client
@@ -106,9 +106,9 @@ export async function approveSubmission(id: string): Promise<void> {
     .update({ status: 'approved', reviewed_at: new Date().toISOString() })
     .eq('id', id);
 
-  revalidatePath('/submissions');
-  revalidatePath('/businesses');
-  redirect('/submissions?approved=1');
+  revalidatePath('/admin/submissions');
+  revalidatePath('/admin/businesses');
+  redirect('/admin/submissions?approved=1');
 }
 
 /** Bulk approve: converts every selected submission in one go. */
@@ -138,11 +138,11 @@ export async function approveSubmissionsBulk(ids: string[]): Promise<void> {
     }
   }
 
-  revalidatePath('/submissions');
-  revalidatePath('/businesses');
+  revalidatePath('/admin/submissions');
+  revalidatePath('/admin/businesses');
   const message =
     failed > 0 ? `${approved} approved, ${failed} failed` : `${approved} approved`;
-  redirect(`/submissions?approved=${encodeURIComponent(message)}`);
+  redirect(`/admin/submissions?approved=${encodeURIComponent(message)}`);
 }
 
 /** Reject a submission with an optional admin note. */
@@ -157,8 +157,8 @@ export async function rejectSubmission(id: string, note?: string): Promise<void>
     })
     .eq('id', id);
 
-  revalidatePath('/submissions');
-  redirect('/submissions?rejected=1');
+  revalidatePath('/admin/submissions');
+  redirect('/admin/submissions?rejected=1');
 }
 
 /** Bulk reject. */
@@ -173,6 +173,6 @@ export async function rejectSubmissionsBulk(ids: string[]): Promise<void> {
     })
     .in('id', ids);
 
-  revalidatePath('/submissions');
-  redirect(`/submissions?rejected=${encodeURIComponent(`${ids.length}`)}`);
+  revalidatePath('/admin/submissions');
+  redirect(`/admin/submissions?rejected=${encodeURIComponent(`${ids.length}`)}`);
 }

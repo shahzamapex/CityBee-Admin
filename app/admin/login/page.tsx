@@ -8,7 +8,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  if (await isAdmin()) redirect('/');
+  if (await isAdmin()) redirect('/admin');
   const { error } = await searchParams;
 
   return (

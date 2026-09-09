@@ -36,7 +36,7 @@ export default async function NewEntityPage({
     <div className="mx-auto max-w-2xl">
       <div className="mb-6">
         <Link
-          href={`/${entity.key}`}
+          href={`/admin/${entity.key}`}
           className="text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
         >
           ← Back to {entity.title}
@@ -59,7 +59,7 @@ export default async function NewEntityPage({
         <EntityForm entity={entity} uuidOptions={uuidOptions} />
         <div className="flex justify-end gap-3 border-t border-stone-100 pt-5">
           <Link
-            href={`/${entity.key}`}
+            href={`/admin/${entity.key}`}
             className="rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:border-stone-400"
           >
             Cancel

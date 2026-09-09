@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { approveSubmission, rejectSubmission } from '@/app/(admin)/[entity]/submission-actions';
+import { approveSubmission, rejectSubmission } from '@/app/admin/(protected)/[entity]/submission-actions';
 
 /**
  * Review actions for pending submissions — Approve converts the request

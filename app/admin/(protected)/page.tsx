@@ -72,7 +72,7 @@ export default async function DashboardPage() {
         {entities.map((entity) => (
           <Link
             key={entity.key}
-            href={`/${entity.key}`}
+            href={`/admin/${entity.key}`}
             className="group rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-[#FF6F00]/40 hover:shadow-md"
           >
             <div className="flex items-center justify-between">
