@@ -514,6 +514,12 @@ export default function SubmitForm() {
                   <option value="" disabled>
                     {dbCategories.length === 0 ? 'Loading categories…' : 'Select a category…'}
                   </option>
+                  {dbCategories.length === 0 &&
+                    Object.entries(CATEGORY_META).map(([slug, meta]) => (
+                      <option key={slug} value={slug}>
+                        {meta.emoji} {meta.kindLabel}
+                      </option>
+                    ))}
                   {dbCategories.map((c) => (
                     <option key={c.slug} value={c.slug}>
                       {categoryLabel(c.slug)}
