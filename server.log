@@ -1,0 +1,9 @@
+
+> citybee-admin-panel@0.1.0 start
+> next start -p 3456
+
+▲ Next.js 16.3.4
+- Local:         http://localhost:3456
+- Network:       http://192.168.8.153:3456
+✓ Ready in 286ms
+✓ Running next.config.ts took 50ms

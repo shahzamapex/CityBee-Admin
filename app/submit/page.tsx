@@ -41,28 +41,28 @@ const STEPS = [
 
 export default function SubmitPage() {
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-canvas">
       {/* ── Top header ─────────────────────────────────────────── */}
-      <header className="border-b border-stone-200 bg-white">
+      <header className="border-b border-border-subtle bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF6F00] text-sm font-extrabold text-white shadow-sm shadow-orange-200">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand font-headline text-sm font-extrabold text-white shadow-sm">
               CB
             </div>
-            <span className="text-base font-extrabold tracking-tight">
-              City<span className="text-[#FF6F00]">Bee</span>
+            <span className="font-headline text-base font-bold tracking-tight">
+              City<span className="text-brand">Bee</span>
             </span>
           </Link>
           <nav className="flex items-center gap-3">
             <Link
               href="/"
-              className="text-sm font-bold text-slate-500 transition hover:text-[#FF6F00]"
+              className="text-sm font-bold text-ink-soft transition hover:text-brand"
             >
               Home
             </Link>
             <Link
               href="/admin"
-              className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-400 transition hover:text-[#FF6F00]"
+              className="rounded-lg px-3 py-1.5 text-xs font-bold text-ink-muted transition hover:text-brand"
             >
               Admin
             </Link>
@@ -76,11 +76,11 @@ export default function SubmitPage() {
           {/* ── Left: info panel ────────────────────────────────── */}
           <aside className="lg:col-span-2">
             <div className="lg:sticky lg:top-10">
-              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              <h1 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
                 List your business on{' '}
-                <span className="text-[#FF6F00]">CityBee</span>
+                <span className="text-brand">CityBee</span>
               </h1>
-              <p className="mt-3 text-base font-medium leading-relaxed text-slate-500">
+              <p className="mt-3 font-body text-base leading-relaxed text-ink-soft">
                 It takes less than two minutes. Our team reviews every
                 submission before it goes live.
               </p>
@@ -89,7 +89,7 @@ export default function SubmitPage() {
               <ol className="mt-8 space-y-4">
                 {STEPS.map((step, i) => (
                   <li key={step} className="flex items-start gap-3.5">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-50 text-xs font-extrabold text-[#FF6F00]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-body text-xs font-bold text-brand">
                       {i + 1}
                     </span>
                     <span className="pt-1 text-sm font-semibold text-slate-600">{step}</span>
@@ -102,13 +102,13 @@ export default function SubmitPage() {
                 {BENEFITS.map((b) => (
                   <div
                     key={b.title}
-                    className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+                    className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="text-lg">{b.emoji}</span>
                       <span className="text-sm font-extrabold">{b.title}</span>
                     </div>
-                    <p className="mt-1.5 text-xs font-medium leading-relaxed text-slate-500">
+                    <p className="mt-1.5 text-xs font-medium leading-relaxed text-ink-soft">
                       {b.text}
                     </p>
                   </div>
@@ -124,8 +124,8 @@ export default function SubmitPage() {
         </div>
       </main>
 
-      <footer className="border-t border-stone-200 bg-white py-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 text-xs font-medium text-slate-400 sm:flex-row">
+      <footer className="border-t border-border-subtle bg-white py-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 text-xs font-medium text-ink-muted sm:flex-row">
           <span>CityBee — Discover What&apos;s Around You</span>
           <span>Free listing · Verified by our team</span>
         </div>

@@ -51,34 +51,34 @@ export default async function HomePage() {
   const city = cityRes.data?.[0];
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-canvas">
       {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border-subtle bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF6F00] text-sm font-extrabold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand font-headline text-sm font-extrabold text-white">
               CB
             </div>
             <span className="text-lg font-extrabold tracking-tight">
-              City<span className="text-[#FF6F00]">Bee</span>
+              City<span className="text-brand">Bee</span>
             </span>
           </div>
           <nav className="flex items-center gap-2">
             <a
               href="#businesses"
-              className="hidden rounded-lg px-3 py-2 text-sm font-bold text-slate-500 transition hover:text-[#FF6F00] sm:block"
+              className="hidden rounded-lg px-3 py-2 text-sm font-bold text-ink-soft transition hover:text-brand sm:block"
             >
               Businesses
             </a>
             <a
               href="#categories"
-              className="hidden rounded-lg px-3 py-2 text-sm font-bold text-slate-500 transition hover:text-[#FF6F00] sm:block"
+              className="hidden rounded-lg px-3 py-2 text-sm font-bold text-ink-soft transition hover:text-brand sm:block"
             >
               Categories
             </a>
             <Link
               href="/submit"
-              className="rounded-xl bg-[#FF6F00] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100]"
+              className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-hover"
             >
               List Your Business
             </Link>
@@ -87,15 +87,15 @@ export default async function HomePage() {
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────── */}
-      <section className="border-b border-orange-100 bg-gradient-to-b from-orange-50/60 to-stone-50">
+      <section className="border-b border-brand-soft bg-gradient-to-b from-brand-soft/60 to-canvas">
         <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:py-24">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FF6F00] text-xl font-extrabold text-white shadow-lg shadow-orange-200">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand font-headline text-xl font-extrabold text-white shadow-lg shadow-brand/25">
             CB
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
             Discover What&apos;s Around You
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base font-medium text-slate-500 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-xl text-base font-medium text-ink-soft sm:text-lg">
             The best local businesses, offers and places
             {city ? ` in ${city.name}` : ' in your city'} — verified and
             trusted by your community.
@@ -103,13 +103,13 @@ export default async function HomePage() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/submit"
-              className="rounded-2xl bg-[#FF6F00] px-7 py-3.5 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:bg-[#E65100] active:scale-[0.98]"
+              className="rounded-2xl bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-md shadow-brand/25 transition hover:bg-brand-hover active:scale-[0.98]"
             >
               + List Your Business — Free
             </Link>
             <a
               href="#businesses"
-              className="rounded-2xl border border-stone-300 bg-white px-7 py-3.5 text-sm font-bold text-slate-600 transition hover:border-[#FF6F00] hover:text-[#FF6F00]"
+              className="rounded-2xl border border-border-strong bg-white px-7 py-3.5 text-sm font-bold text-slate-600 transition hover:border-brand hover:text-brand"
             >
               Browse Businesses
             </a>
@@ -134,7 +134,7 @@ export default async function HomePage() {
               return (
                 <div
                   key={cat.slug}
-                  className="rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-sm transition hover:border-[#FF6F00]/40 hover:shadow-md"
+                  className="rounded-2xl border border-border-subtle bg-white p-5 text-center shadow-sm transition hover:border-brand/30 hover:shadow-md"
                 >
                   <div className="text-2xl">{meta.emoji}</div>
                   <div className="mt-2 text-sm font-bold text-slate-700">{meta.label}</div>
@@ -146,7 +146,7 @@ export default async function HomePage() {
       )}
 
       {/* ── Featured businesses ────────────────────────────────── */}
-      <section id="businesses" className="border-t border-stone-200 bg-white">
+      <section id="businesses" className="border-t border-border-subtle bg-white">
         <div className="mx-auto max-w-5xl px-4 py-14">
           <SectionTitle
             eyebrow="Featured"
@@ -158,13 +158,13 @@ export default async function HomePage() {
             }
           />
           {businesses.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
-              <p className="text-sm font-medium text-slate-400">
+            <div className="mt-6 rounded-2xl border border-dashed border-border-strong bg-subtle p-10 text-center">
+              <p className="text-sm font-medium text-ink-muted">
                 No businesses listed yet — be the first!
               </p>
               <Link
                 href="/submit"
-                className="mt-4 inline-block rounded-xl bg-[#FF6F00] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#E65100]"
+                className="mt-4 inline-block rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-hover"
               >
                 List Your Business
               </Link>
@@ -174,10 +174,10 @@ export default async function HomePage() {
               {businesses.map((biz) => (
                 <div
                   key={biz.name}
-                  className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-[#FF6F00]/40 hover:shadow-md"
+                  className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition hover:border-brand/30 hover:shadow-md"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#FF6F00]">
+                    <span className="rounded-full bg-brand-soft px-2.5 py-1 font-body text-[11px] font-bold uppercase tracking-wide text-brand">
                       {biz.kind}
                     </span>
                     {biz.is_verified && (
@@ -185,7 +185,7 @@ export default async function HomePage() {
                     )}
                   </div>
                   <h3 className="mt-3 line-clamp-1 font-extrabold">{biz.name}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-500">
+                  <p className="mt-1 line-clamp-2 text-xs font-medium text-ink-soft">
                     {biz.tagline || '—'}
                   </p>
                   <div className="mt-3 flex items-center justify-between border-t border-stone-100 pt-3 text-xs">
@@ -206,7 +206,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── CTA banner ─────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#FF8F2B] to-[#E65100]">
+      <section className="bg-gradient-to-br from-brand to-brand-hover">
         <div className="mx-auto max-w-5xl px-4 py-14 text-center text-white">
           <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
             Own a local business?
@@ -217,7 +217,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/submit"
-            className="mt-6 inline-block rounded-2xl bg-white px-8 py-3.5 text-sm font-extrabold text-[#E65100] shadow-lg transition hover:bg-orange-50 active:scale-[0.98]"
+            className="mt-6 inline-block rounded-2xl bg-white px-8 py-3.5 text-sm font-extrabold text-brand shadow-lg transition hover:bg-brand-soft/50 active:scale-[0.98]"
           >
             List Your Business →
           </Link>
@@ -225,21 +225,21 @@ export default async function HomePage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="border-t border-stone-200 bg-white">
+      <footer className="border-t border-border-subtle bg-white">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FF6F00] text-[10px] font-extrabold text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-[10px] font-headline font-extrabold text-white">
               CB
             </div>
             <span className="text-sm font-extrabold">
-              City<span className="text-[#FF6F00]">Bee</span>
+              City<span className="text-brand">Bee</span>
             </span>
           </div>
-          <div className="flex items-center gap-5 text-xs font-bold text-slate-400">
-            <Link href="/submit" className="transition hover:text-[#FF6F00]">List Business</Link>
-            <Link href="/admin" className="transition hover:text-[#FF6F00]">Admin</Link>
+          <div className="flex items-center gap-5 text-xs font-bold text-ink-muted">
+            <Link href="/submit" className="transition hover:text-brand">List Business</Link>
+            <Link href="/admin" className="transition hover:text-brand">Admin</Link>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-ink-muted">
             Discover What&apos;s Around You
           </p>
         </div>
@@ -252,7 +252,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center">
       <div className="text-2xl font-extrabold text-slate-800 sm:text-3xl">{value}</div>
-      <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+      <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
         {label}
       </div>
     </div>
@@ -270,11 +270,11 @@ function SectionTitle({
 }) {
   return (
     <div className="text-center">
-      <div className="text-xs font-extrabold uppercase tracking-widest text-[#FF6F00]">
+      <div className="font-body text-xs font-bold uppercase tracking-widest text-brand">
         {eyebrow}
       </div>
       <h2 className="mt-1.5 text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
-      {subtitle && <p className="mt-1.5 text-sm font-medium text-slate-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1.5 text-sm font-medium text-ink-soft">{subtitle}</p>}
     </div>
   );
 }

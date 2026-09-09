@@ -93,14 +93,14 @@ export default function CityAutocomplete({
 
   const inputCls = `w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition ${
     error
-      ? 'border-red-300 bg-red-50/30 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-      : 'border-stone-300 bg-white focus:border-[#FF6F00] focus:ring-2 focus:ring-[#FF6F00]/20'
+      ? 'border-rose/40 bg-rose/5 focus:border-rose focus:ring-2 focus:ring-rose/15'
+      : 'border-border-strong bg-white focus:border-brand focus:ring-2 focus:ring-brand/15'
   }`;
 
   return (
     <div ref={boxRef} className="relative">
       <label htmlFor="city_input" className="mb-1.5 block text-sm font-bold">
-        City <span className="text-[#FF6F00]">*</span>
+        City <span className="text-brand">*</span>
       </label>
       <div className="relative">
         <input
@@ -117,13 +117,13 @@ export default function CityAutocomplete({
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
           {resolving && (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-orange-200 border-t-[#FF6F00]" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-soft border-t-brand" />
           )}
           {value && !resolving && (
             <button
               type="button"
               onClick={clear}
-              className="text-xs font-bold text-slate-400 hover:text-red-500"
+              className="text-xs font-bold text-ink-muted hover:text-rose"
               aria-label="Clear city"
             >
               ✕
@@ -133,27 +133,27 @@ export default function CityAutocomplete({
       </div>
 
       {value && (
-        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-green-600">
+        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-emerald">
           📍 {value.name} selected
         </p>
       )}
       {(error || loadError) && !value && (
-        <p className="mt-1.5 text-xs font-semibold text-red-500">{error ?? loadError}</p>
+        <p className="mt-1.5 text-xs font-semibold text-rose">{error ?? loadError}</p>
       )}
       {!value && !error && !loadError && (
-        <p className="mt-1.5 text-xs font-medium text-slate-400">
+        <p className="mt-1.5 text-xs font-medium text-ink-muted">
           Powered by Google — search and tap your city
         </p>
       )}
 
       {open && predictions.length > 0 && (
-        <ul className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg">
+        <ul className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-border-subtle bg-white py-1 shadow-lg">
           {predictions.map((p) => (
             <li key={p.placeId}>
               <button
                 type="button"
                 onClick={() => select(p)}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-orange-50"
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-semibold text-ink-soft transition hover:bg-brand-soft/40"
               >
                 <span>📍</span>
                 <span className="truncate">{p.description}</span>

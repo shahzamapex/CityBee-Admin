@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { submitBusiness } from './actions';
 import { getUploadSignature } from './upload-actions';
+import { getCategories, type DbCategory } from './category-actions';
 import CityAutocomplete, { type SelectedCity } from './city-autocomplete';
 
 // ── Country codes (dropdown) ──────────────────────────────────────────
@@ -17,21 +18,23 @@ const COUNTRIES = [
   { code: '+977', flag: '🇳🇵', name: 'Nepal', min: 10, max: 10, starts: '[9]' },
 ];
 
-// ── Single category picklist — drives the dynamic fields + kind ───────
-const CATEGORIES = [
-  { slug: 'doctors', label: '🩺 Doctor / Clinic', kind: 'doctor' },
-  { slug: 'dining', label: '🍕 Restaurant / Food', kind: 'restaurant' },
-  { slug: 'hotels', label: '🏨 Hotel / Stay', kind: 'hotel' },
-  { slug: 'salons', label: '💄 Beauty Salon / Spa', kind: 'salon' },
-  { slug: 'barbers', label: '💈 Barber', kind: 'salon' },
-  { slug: 'fashion', label: '👗 Fashion / Clothing Shop', kind: 'shop' },
-  { slug: 'grocery', label: '🛒 Grocery / Kirana', kind: 'shop' },
-  { slug: 'malls', label: '🏬 Mall / Market', kind: 'mall' },
-  { slug: 'cinemas', label: '🎬 Cinema / Entertainment', kind: 'service' },
-  { slug: 'heritage', label: '🏛️ Crafts / Heritage Shop', kind: 'shop' },
-] as const;
-
-type CategorySlug = (typeof CATEGORIES)[number]['slug'];
+/**
+ * Category slug → business kind + display emoji + which dynamic fields to
+ * show. Slugs come from the DB; entries not listed here fall back to a
+ * generic shop form.
+ */
+const CATEGORY_META: Record<string, { kind: string; emoji: string; dynamic: 'doctor' | 'restaurant' | 'hotel' | null }> = {
+  doctors: { kind: 'doctor', emoji: '🩺', dynamic: 'doctor' },
+  dining: { kind: 'restaurant', emoji: '🍕', dynamic: 'restaurant' },
+  hotels: { kind: 'hotel', emoji: '🏨', dynamic: 'hotel' },
+  salons: { kind: 'salon', emoji: '💄', dynamic: null },
+  barbers: { kind: 'salon', emoji: '💈', dynamic: null },
+  fashion: { kind: 'shop', emoji: '👗', dynamic: null },
+  grocery: { kind: 'shop', emoji: '🛒', dynamic: null },
+  malls: { kind: 'mall', emoji: '🏬', dynamic: null },
+  cinemas: { kind: 'service', emoji: '🎬', dynamic: null },
+  heritage: { kind: 'shop', emoji: '🏛️', dynamic: null },
+};
 
 // ── Opening-hours select options ──────────────────────────────────────
 const TIME_OPTIONS: string[] = (() => {
@@ -73,16 +76,30 @@ export default function SubmitForm() {
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Errors>({});
   const [success, setSuccess] = useState(false);
-  const [category, setCategory] = useState<CategorySlug | ''>('');
+  const [category, setCategory] = useState<string>('');
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [city, setCity] = useState<SelectedCity | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dbCategories, setDbCategories] = useState<DbCategory[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const kind = CATEGORIES.find((c) => c.slug === category)?.kind;
+  // Categories load live from the database (admin-managed, never hard-coded).
+  useEffect(() => {
+    getCategories().then(setDbCategories).catch(() => setDbCategories([]));
+  }, []);
+
+  const meta = CATEGORY_META[category];
+  const kind = meta?.kind ?? 'shop';
+  const dynamicFields = meta?.dynamic ?? null;
+
+  const categoryLabel = (slug: string): string => {
+    const cat = dbCategories.find((c) => c.slug === slug);
+    const emoji = CATEGORY_META[slug]?.emoji ?? '🗂️';
+    return cat ? `${emoji} ${cat.name}` : `${emoji} ${slug}`;
+  };
 
   // ── Image upload (direct to Cloudinary, signed server-side) ─────────
   async function handleFiles(files: FileList | null) {
@@ -223,7 +240,7 @@ export default function SubmitForm() {
 
   if (success) {
     return (
-      <div className="rounded-2xl border border-green-200 bg-white p-10 text-center shadow-sm">
+      <div className="rounded-xl border border-emerald/25 bg-white p-10 text-center shadow-sm">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-3xl">✅</div>
         <h2 className="mt-5 text-2xl font-extrabold tracking-tight">Request submitted!</h2>
         <p className="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
@@ -231,7 +248,7 @@ export default function SubmitForm() {
         </p>
         <button
           onClick={() => setSuccess(false)}
-          className="mt-7 rounded-xl bg-[#FF6F00] px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:bg-[#E65100]"
+          className="mt-7 rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-brand/25 transition hover:bg-brand-hover"
         >
           Submit another business
         </button>
@@ -240,41 +257,47 @@ export default function SubmitForm() {
   }
 
   const inputCls = (name: string) =>
-    `w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition ${
+    `w-full rounded-lg border px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted ${
       errors[name]
-        ? 'border-red-300 bg-red-50/30 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-        : 'border-stone-300 bg-white focus:border-[#FF6F00] focus:ring-2 focus:ring-[#FF6F00]/20'
+        ? 'border-rose/40 bg-rose/5 focus:border-rose focus:ring-2 focus:ring-rose/15'
+        : 'border-border-strong bg-white focus:border-brand focus:ring-2 focus:ring-brand/15'
     }`;
 
   return (
     <form
       ref={formRef}
       action={handleSubmit}
-      className="space-y-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8"
+      className="space-y-8 rounded-xl border border-border-subtle bg-white p-6 shadow-sm sm:p-8"
       noValidate
     >
       {errors.form && (
-        <div data-error="true" className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+        <div data-error="true" className="rounded-lg border border-rose/25 bg-rose/10 px-4 py-2.5 font-body text-sm font-semibold text-rose">
           {errors.form}
         </div>
       )}
 
-      {/* ── 1. Category (drives everything else) ───────────────── */}
+      {/* ── 1. Category (live from DB, drives everything else) ── */}
       <section className="space-y-4" data-error={!!errors.category}>
         <SectionHeader step="1" title="Choose a category" hint="This decides which details we ask for" />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-          {CATEGORIES.map((c) => (
+          {dbCategories.length === 0 && (
+            <div className="col-span-full flex items-center gap-2 rounded-lg border border-dashed border-border-strong px-4 py-4 font-body text-sm text-ink-muted">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-soft border-t-brand" />
+              Loading categories…
+            </div>
+          )}
+          {dbCategories.map((c) => (
             <button
               type="button"
               key={c.slug}
               onClick={() => setCategory(c.slug)}
-              className={`rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition sm:text-sm ${
+              className={`rounded-lg border px-3 py-2.5 text-left font-body text-xs font-semibold transition sm:text-sm ${
                 category === c.slug
-                  ? 'border-[#FF6F00] bg-orange-50 text-[#FF6F00] ring-2 ring-[#FF6F00]/20'
-                  : 'border-stone-200 bg-white text-slate-600 hover:border-orange-200'
+                  ? 'border-brand bg-brand-soft text-brand ring-2 ring-brand/15'
+                  : 'border-border-subtle bg-white text-ink-soft hover:border-brand/40'
               }`}
             >
-              {c.label}
+              {categoryLabel(c.slug).replace(/^(\S+)\s/, '$1 ')}
             </button>
           ))}
         </div>
@@ -283,14 +306,14 @@ export default function SubmitForm() {
 
       {/* ── 2. Contact ─────────────────────────────────────────── */}
       <section
-        className="space-y-4 border-t border-stone-100 pt-6"
+        className="space-y-4 border-t border-border-subtle/60 pt-6"
         data-error={!!(errors.submitter_name || errors.submitter_phone || errors.submitter_email)}
       >
         <SectionHeader step="2" title="Your details" hint="So we can reach you about the listing" />
         <div className="grid gap-4 sm:grid-cols-2">
           <div data-error={!!errors.submitter_name}>
             <label htmlFor="submitter_name" className="mb-1.5 block text-sm font-bold">
-              Your name <span className="text-[#FF6F00]">*</span>
+              Your name <span className="text-brand">*</span>
             </label>
             <input id="submitter_name" name="submitter_name" maxLength={80} className={inputCls('submitter_name')} placeholder="Amit Sharma" />
             <FieldError msg={errors.submitter_name} />
@@ -298,13 +321,13 @@ export default function SubmitForm() {
 
           <div data-error={!!errors.submitter_phone}>
             <label htmlFor="submitter_phone" className="mb-1.5 block text-sm font-bold">
-              Phone <span className="text-[#FF6F00]">*</span>
+              Phone <span className="text-brand">*</span>
             </label>
             <div className="flex gap-2">
               <select
                 value={country.code}
                 onChange={(e) => setCountry(COUNTRIES.find((c) => c.code === e.target.value) ?? COUNTRIES[0])}
-                className="rounded-xl border border-stone-300 bg-white px-2 py-2.5 text-sm font-semibold outline-none focus:border-[#FF6F00]"
+                className="rounded-xl border border-border-strong bg-white px-2 py-2.5 text-sm font-semibold outline-none focus:border-brand"
               >
                 {COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
@@ -331,19 +354,19 @@ export default function SubmitForm() {
 
       {/* ── 3. Business + dynamic category fields ──────────────── */}
       <section
-        className="space-y-4 border-t border-stone-100 pt-6"
+        className="space-y-4 border-t border-border-subtle/60 pt-6"
         data-error={!!(errors.business_name || errors.address || errors.city || errors.opening_time || errors.website || errors.specialization || errors.hotel_type)}
       >
         <SectionHeader
           step="3"
           title="Business details"
-          hint={category ? CATEGORIES.find((c) => c.slug === category)?.label : 'Pick a category above for extra fields'}
+          hint={category ? categoryLabel(category).replace(/^S+s/, '') : 'Pick a category above for extra fields'}
         />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div data-error={!!errors.business_name}>
             <label htmlFor="business_name" className="mb-1.5 block text-sm font-bold">
-              Business name <span className="text-[#FF6F00]">*</span>
+              Business name <span className="text-brand">*</span>
             </label>
             <input id="business_name" name="business_name" maxLength={120} className={inputCls('business_name')} placeholder="Royal Restaurant & Banquet" />
             <FieldError msg={errors.business_name} />
@@ -354,7 +377,7 @@ export default function SubmitForm() {
             <>
               <div data-error={!!errors.specialization}>
                 <label htmlFor="specialization" className="mb-1.5 block text-sm font-bold">
-                  Specialization <span className="text-[#FF6F00]">*</span>
+                  Specialization <span className="text-brand">*</span>
                 </label>
                 <input id="specialization" name="specialization" maxLength={80} className={inputCls('specialization')} placeholder="Dentist / Cardiologist…" />
                 <FieldError msg={errors.specialization} />
@@ -403,7 +426,7 @@ export default function SubmitForm() {
             <>
               <div data-error={!!errors.hotel_type}>
                 <label htmlFor="hotel_type" className="mb-1.5 block text-sm font-bold">
-                  Hotel type <span className="text-[#FF6F00]">*</span>
+                  Hotel type <span className="text-brand">*</span>
                 </label>
                 <select name="hotel_type" defaultValue="" className={inputCls('hotel_type')}>
                   <option value="" disabled>Choose…</option>
@@ -435,8 +458,8 @@ export default function SubmitForm() {
                 <span className="mb-1.5 block text-sm font-bold">Amenities</span>
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-5">
                   {HOTEL_AMENITIES.map((a) => (
-                    <label key={a} className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-600">
-                      <input type="checkbox" name="amenities" value={a} className="h-3.5 w-3.5 accent-[#FF6F00]" />
+                    <label key={a} className="flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-2.5 py-2 text-xs font-semibold text-ink-soft">
+                      <input type="checkbox" name="amenities" value={a} className="h-3.5 w-3.5 accent-brand" />
                       {a}
                     </label>
                   ))}
@@ -452,7 +475,7 @@ export default function SubmitForm() {
 
           <div data-error={!!errors.address} className="sm:col-span-2">
             <label htmlFor="address" className="mb-1.5 block text-sm font-bold">
-              Full address <span className="text-[#FF6F00]">*</span>
+              Full address <span className="text-brand">*</span>
             </label>
             <input id="address" name="address" maxLength={200} className={inputCls('address')} placeholder="Shop no, street, landmark" />
             <FieldError msg={errors.address} />
@@ -497,12 +520,12 @@ export default function SubmitForm() {
           {/* ── Photos (full width) ─────────────────────────────── */}
           <div className="sm:col-span-2">
             <span className="mb-1.5 block text-sm font-bold">Photos ({images.length}/{MAX_IMAGES})</span>
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-stone-300 bg-stone-50 px-4 py-8 text-center transition hover:border-[#FF6F00] hover:bg-orange-50/50">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border-strong bg-subtle px-4 py-8 text-center transition hover:border-brand/40 hover:bg-brand-soft/40">
               <span className="text-2xl">📷</span>
-              <span className="text-sm font-bold text-slate-600">
+              <span className="text-sm font-bold text-ink-soft">
                 {uploading ? 'Uploading…' : 'Click to add photos'}
               </span>
-              <span className="text-xs font-medium text-slate-400">JPG / PNG / WebP · max {MAX_IMAGE_MB}MB each · first photo becomes the cover</span>
+              <span className="text-xs font-medium text-ink-muted">JPG / PNG / WebP · max {MAX_IMAGE_MB}MB each · first photo becomes the cover</span>
               <input
                 ref={fileRef}
                 type="file"
@@ -513,17 +536,17 @@ export default function SubmitForm() {
                 onChange={(e) => handleFiles(e.target.files)}
               />
             </label>
-            {uploadError && <p className="mt-1.5 text-xs font-semibold text-red-500">{uploadError}</p>}
+            {uploadError && <p className="mt-1.5 text-xs font-semibold text-rose">{uploadError}</p>}
             {images.length > 0 && (
               <div className="mt-3 grid grid-cols-5 gap-2">
                 {images.map((img, i) => (
                   <div key={img.publicId} className="group relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.url} alt={`Photo ${i + 1}`} className="h-20 w-full rounded-xl border border-stone-200 object-cover" />
+                    <img src={img.url} alt={`Photo ${i + 1}`} className="h-20 w-full rounded-xl border border-border-subtle object-cover" />
                     <button
                       type="button"
                       onClick={() => removeImage(i)}
-                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow"
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose text-[10px] font-bold text-white shadow"
                     >
                       ✕
                     </button>
@@ -541,15 +564,15 @@ export default function SubmitForm() {
       </section>
 
       {/* ── Submit ─────────────────────────────────────────────── */}
-      <div className="border-t border-stone-100 pt-6">
+      <div className="border-t border-border-subtle/60 pt-6">
         <button
           type="submit"
           disabled={pending || uploading}
-          className="w-full rounded-xl bg-[#FF6F00] py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:bg-[#E65100] active:scale-[0.99] disabled:opacity-60 sm:w-auto sm:px-10"
+          className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white shadow-md shadow-brand/25 transition hover:bg-brand-hover active:scale-[0.99] disabled:opacity-60 sm:w-auto sm:px-10"
         >
           {pending ? 'Submitting…' : uploading ? 'Uploading photos…' : 'Submit for Review'}
         </button>
-        <p className="mt-3 text-xs font-medium text-slate-400">
+        <p className="mt-3 text-xs font-medium text-ink-muted">
           Free listing · Our team verifies every business before it goes live
         </p>
       </div>
@@ -560,12 +583,12 @@ export default function SubmitForm() {
 function SectionHeader({ step, title, hint }: { step: string; title: string; hint?: string }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[11px] font-extrabold text-[#FF6F00]">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-soft font-body text-[11px] font-extrabold text-brand">
         {step}
       </span>
       <div>
         <h3 className="text-sm font-extrabold tracking-tight">{title}</h3>
-        {hint && <p className="text-xs font-medium text-slate-400">{hint}</p>}
+        {hint && <p className="text-xs font-medium text-ink-muted">{hint}</p>}
       </div>
     </div>
   );
@@ -573,5 +596,5 @@ function SectionHeader({ step, title, hint }: { step: string; title: string; hin
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="mt-1.5 text-xs font-semibold text-red-500">{msg}</p>;
+  return <p className="mt-1.5 text-xs font-semibold text-rose">{msg}</p>;
 }
