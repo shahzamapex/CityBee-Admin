@@ -11,8 +11,9 @@ interface JobView {
   results: { name: string; ok: boolean; status: string; slug?: string; error?: string }[];
   summary: { total: number; created: number; reused: number; failed: number } | null;
   error: string | null;
-  createdAt: number;
-  updatedAt: number;
+  createdByEmail: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const SAMPLE_JSON = `[
@@ -62,7 +63,7 @@ export default function BulkImportClient({
   const poll = useCallback(async () => {
     try {
       const fresh = await pollJobs();
-      setJobs(fresh as JobView[]);
+      setJobs(fresh as unknown as JobView[]);
     } catch {
       // polling failures are transient
     }

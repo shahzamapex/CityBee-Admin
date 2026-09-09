@@ -71,5 +71,5 @@ export async function queueBulkImport(rawJson: string): Promise<QueueResult> {
 
   const job = await queueBulkJob(clean);
   revalidatePath('/admin/bulk-import');
-  return { ok: true, jobId: job.id, count: clean.length };
+  return { ok: true, jobId: String(job.id), count: clean.length };
 }

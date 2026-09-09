@@ -1,13 +1,16 @@
+import { getAdminClient } from '@/lib/supabase';
 import { getAdminSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 /**
- * Bulk import job: paste JSON → queued job → processed sequentially
- * (one at a time) → per-record results (created / reused / failed).
+ * Bulk import jobs — persisted in public.bulk_import_jobs, so:
+ *  • every pasted payload survives reloads/restarts
+ *  • the queue runs strictly sequentially, reading the next queued row
+ *    from the table
+ *  • per-record results + summary stay visible forever in the panel
  *
- * Jobs live in the business_submissions DB table's dedicated import log
- * (jsonb job_store below); the queue is strictly serial — a new job waits
- * until the previous one finishes.
+ * Processing state is module-scoped (single Vercel instance); the DB is
+ * the source of truth for job data.
  */
 
 export interface BulkJobItem {
@@ -23,7 +26,6 @@ export interface BulkJobItem {
   longitude?: number;
   googlePlaceId?: string;
   imageUrls?: string[];
-  // doctor extras
   specialization?: string;
   qualification?: string;
   experienceYears?: number;
@@ -38,96 +40,162 @@ export interface BulkJobResultItem {
   error?: string;
 }
 
-export interface BulkJob {
+export interface BulkJobView {
   id: string;
-  payload: BulkJobItem[];
   status: 'queued' | 'running' | 'done' | 'failed';
+  payloadCount: number;
   results: BulkJobResultItem[];
-  summary?: { total: number; created: number; reused: number; failed: number };
-  createdAt: number;
-  updatedAt: number;
-  error?: string;
+  summary: { total: number; created: number; reused: number; failed: number } | null;
+  error: string | null;
+  createdByEmail: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// In-process job store (single Vercel instance) + DB persistence for
-// cross-instance visibility. Simple module-level queue.
-const globalStore = globalThis as unknown as { __citybeeJobs?: BulkJob[]; __citybeeRunning?: boolean };
-if (!globalStore.__citybeeJobs) globalStore.__citybeeJobs = [];
-if (globalStore.__citybeeRunning === undefined) globalStore.__citybeeRunning = false;
-
-export function getJobs(): BulkJob[] {
-  return globalStore.__citybeeJobs ?? [];
+interface JobRow {
+  id: string;
+  status: 'queued' | 'running' | 'done' | 'failed';
+  payload: BulkJobItem[];
+  results: BulkJobResultItem[] | null;
+  summary: { total: number; created: number; reused: number; failed: number } | null;
+  error: string | null;
+  created_by_email: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-function saveJob(job: BulkJob) {
-  const jobs = globalStore.__citybeeJobs!;
-  const i = jobs.findIndex((j) => j.id === job.id);
-  if (i >= 0) jobs[i] = job;
-  else jobs.unshift(job);
-}
+// In-process pump lock (one processor per instance).
+const globalStore = globalThis as unknown as { __citybeePumping?: boolean };
+if (globalStore.__citybeePumping === undefined) globalStore.__citybeePumping = false;
 
-/** Queue a new import job. Processing starts immediately if idle. */
-export async function queueBulkJob(items: BulkJobItem[]): Promise<BulkJob> {
-  const session = await getAdminSession();
-  const job: BulkJob = {
-    id: `job_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
-    payload: items,
-    status: 'queued',
-    results: [],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+function toView(row: JobRow): BulkJobView {
+  return {
+    id: row.id,
+    status: row.status,
+    payloadCount: Array.isArray(row.payload) ? row.payload.length : 0,
+    results: Array.isArray(row.results) ? row.results : [],
+    summary: row.summary ?? null,
+    error: row.error ?? null,
+    createdByEmail: row.created_by_email ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
-  saveJob(job);
-  void pumpQueue(session?.jwt);
-  return job;
 }
 
-/** Serial pump: runs one job at a time; new jobs wait in line. */
-async function pumpQueue(jwt?: string): Promise<void> {
-  if (globalStore.__citybeeRunning) return;
-  globalStore.__citybeeRunning = true;
-  try {
-    // Re-read session JWT per job (long queues may outlive a token? 12h — fine).
-    while (true) {
-      const jobs = globalStore.__citybeeJobs!;
-      const next = [...jobs].reverse().find((j) => j.status === 'queued');
-      if (!next) break;
-      next.status = 'running';
-      next.updatedAt = Date.now();
-      saveJob(next);
+/** Recent jobs from the DB (newest first). */
+export async function getJobs(limit = 50): Promise<BulkJobView[]> {
+  const client = getAdminClient();
+  const { data } = await client
+    .from('bulk_import_jobs')
+    .select('id, status, payload, results, summary, error, created_by_email, created_at, updated_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return (data ?? []).map((r) => toView(r as unknown as JobRow));
+}
 
-      const token = jwt ?? (await getAdminSession())?.jwt;
-      if (!token) {
-        next.status = 'failed';
-        next.error = 'Admin session expired — re-login and re-submit.';
-        next.updatedAt = Date.now();
-        saveJob(next);
+/** Queue a new job (persisted) and kick the serial processor. */
+export async function queueBulkJob(items: BulkJobItem[]): Promise<BulkJobView> {
+  const session = await getAdminSession();
+  const client = getAdminClient();
+
+  const { data, error } = await client
+    .from('bulk_import_jobs')
+    .insert({
+      payload: items,
+      status: 'queued',
+      created_by: session?.userId ?? null,
+      created_by_email: session?.email ?? null,
+    })
+    .select('id, status, payload, results, summary, error, created_by_email, created_at, updated_at')
+    .single();
+  if (error || !data) throw new Error(error?.message ?? 'Could not queue the job');
+
+  revalidatePath('/admin/bulk-import');
+  // Fire-and-forget: the pump reads from the DB and processes in order.
+  void pumpQueue();
+  return toView(data as unknown as JobRow);
+}
+
+/** Serial processor: claim → run → next, one at a time. */
+async function pumpQueue(): Promise<void> {
+  if (globalStore.__citybeePumping) return;
+  globalStore.__citybeePumping = true;
+  const client = getAdminClient();
+  try {
+    while (true) {
+      // Next queued job, oldest first.
+      const { data: nextRows } = await client
+        .from('bulk_import_jobs')
+        .select('*')
+        .eq('status', 'queued')
+        .order('created_at', { ascending: true })
+        .limit(1);
+      const job = (nextRows ?? [])[0] as JobRow | undefined;
+      if (!job) break;
+
+      // Claim it (queued → running) — guards against double-processing.
+      const { data: claimed } = await client
+        .from('bulk_import_jobs')
+        .update({ status: 'running', started_at: new Date().toISOString() })
+        .eq('id', job.id)
+        .eq('status', 'queued') // only if still queued
+        .select('id')
+        .single();
+      if (!claimed) continue; // someone else claimed it
+
+      // Fresh session JWT (12h sessions; jobs are short).
+      const session = await getAdminSession();
+      if (!session) {
+        await client
+          .from('bulk_import_jobs')
+          .update({
+            status: 'failed',
+            error: 'Admin session expired — re-login and re-queue the remaining JSON.',
+            finished_at: new Date().toISOString(),
+          })
+          .eq('id', job.id);
         continue;
       }
 
       try {
-        await runJob(next, token);
+        await runJob(job.id, job.payload, session.jwt, client);
       } catch (err) {
-        next.status = 'failed';
-        next.error = err instanceof Error ? err.message : 'Job failed';
-        next.updatedAt = Date.now();
+        await client
+          .from('bulk_import_jobs')
+          .update({
+            status: 'failed',
+            error: err instanceof Error ? err.message : 'Job failed',
+            finished_at: new Date().toISOString(),
+          })
+          .eq('id', job.id);
       }
-      saveJob(next);
       revalidatePath('/admin/bulk-import');
     }
   } finally {
-    globalStore.__citybeeRunning = false;
+    globalStore.__citybeePumping = false;
+    // Jobs queued while we were finishing? Pump again.
+    const { count } = await client
+      .from('bulk_import_jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'queued');
+    if ((count ?? 0) > 0) void pumpQueue();
   }
 }
 
 /** Execute one job against the backend's /businesses/bulk (25-item chunks). */
-async function runJob(job: BulkJob, jwt: string): Promise<void> {
-  const created = { c: 0, r: 0, f: 0 };
+async function runJob(
+  jobId: string,
+  payload: BulkJobItem[],
+  jwt: string,
+  client: ReturnType<typeof getAdminClient>,
+): Promise<void> {
   const results: BulkJobResultItem[] = [];
+  let created = 0;
+  let reused = 0;
+  let failed = 0;
 
-  // Backend accepts up to 25 per call — chunk larger jobs.
-  for (let i = 0; i < job.payload.length; i += 25) {
-    const chunk = job.payload.slice(i, i + 25);
+  for (let i = 0; i < payload.length; i += 25) {
+    const chunk = payload.slice(i, i + 25);
     const url = `${process.env.BACKEND_URL}/api/businesses/bulk`;
     const res = await fetch(url, {
       method: 'POST',
@@ -137,16 +205,16 @@ async function runJob(job: BulkJob, jwt: string): Promise<void> {
     const body = (await res.json()) as {
       success?: boolean;
       message?: string;
-      data?: { total: number; created: number; reused: number; failed: number; results: Record<string, unknown>[] };
+      data?: { created: number; reused: number; failed: number; results: Record<string, unknown>[] };
     };
 
     if (!res.ok || !body.data) {
       throw new Error(body.message ?? `Backend rejected chunk ${i / 25 + 1} (HTTP ${res.status})`);
     }
 
-    created.c += body.data.created;
-    created.r += body.data.reused;
-    created.f += body.data.failed;
+    created += body.data.created;
+    reused += body.data.reused;
+    failed += body.data.failed;
     for (const r of body.data.results ?? []) {
       results.push({
         name: String(r.name ?? ''),
@@ -156,24 +224,21 @@ async function runJob(job: BulkJob, jwt: string): Promise<void> {
         error: r.error ? String(r.error) : undefined,
       });
     }
-    // Live progress update per chunk.
-    job.results = results;
-    job.updatedAt = Date.now();
-    saveJob(job);
+    // Live progress (visible while polling).
+    await client
+      .from('bulk_import_jobs')
+      .update({ results: JSON.parse(JSON.stringify(results)), updated_at: new Date().toISOString() })
+      .eq('id', jobId);
   }
 
-  job.status = 'done';
-  job.results = results;
-  job.summary = {
-    total: job.payload.length,
-    created: created.c,
-    reused: created.r,
-    failed: created.f,
-  };
-  job.updatedAt = Date.now();
-
-}
-
-export function getJob(id: string): BulkJob | undefined {
-  return (globalStore.__citybeeJobs ?? []).find((j) => j.id === id);
+  await client
+    .from('bulk_import_jobs')
+    .update({
+      status: 'done',
+      results: JSON.parse(JSON.stringify(results)),
+      summary: { total: payload.length, created, reused, failed },
+      finished_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', jobId);
 }
