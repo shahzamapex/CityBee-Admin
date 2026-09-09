@@ -14,7 +14,7 @@ export const metadata = { title: 'Submissions — CityBee Admin' };
 export default async function SubmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ approved?: string; rejected?: string; error?: string }>;
+  searchParams: Promise<{ approved?: string; rejected?: string; error?: string; deleted?: string }>;
 }) {
   const query = await searchParams;
   const client = getAdminClient();
@@ -54,6 +54,7 @@ export default async function SubmissionsPage({
 
       {/* ── Banners ─────────────────────────────────────────── */}
       {query.approved && <Banner tone="success">✓ {query.approved}</Banner>}
+      {query.deleted && <Banner tone="success">✓ Submission deleted.</Banner>}
       {query.rejected && <Banner tone="success">✓ {query.rejected} rejected</Banner>}
       {query.error && <Banner tone="error">{query.error}</Banner>}
 

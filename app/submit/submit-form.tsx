@@ -503,7 +503,7 @@ export default function SubmitForm() {
               <FieldError msg={errors.category} />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3.5 sm:grid-cols-2">
               <div data-error={!!errors.submitter_name}>
                 <label htmlFor="submitter_name" className="mb-1.5 block font-body text-sm font-semibold text-ink">
                   Your name <span className="text-brand">*</span>
@@ -582,8 +582,8 @@ export default function SubmitForm() {
               hint={category ? categoryLabel(category).replace(/^\S+\s/, '') : 'About the business'}
             />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div data-error={!!errors.business_name} className="sm:col-span-2">
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <div data-error={!!errors.business_name}>
                 <label htmlFor="business_name" className="mb-1.5 block font-body text-sm font-semibold text-ink">
                   Business name <span className="text-brand">*</span>
                 </label>
@@ -771,7 +771,7 @@ export default function SubmitForm() {
               )}
 
               {/* ── City + address ─────────────────────────────────── */}
-              <div className="sm:col-span-2">
+              <div>
                 <CityAutocomplete
                   value={city}
                   onChange={(c) => {
@@ -782,7 +782,7 @@ export default function SubmitForm() {
                 />
               </div>
 
-              <div data-error={!!errors.address} className="sm:col-span-2">
+              <div data-error={!!errors.address}>
                 <label htmlFor="address" className="mb-1.5 block font-body text-sm font-semibold text-ink">
                   Full address <span className="text-brand">*</span>
                 </label>
@@ -817,30 +817,32 @@ export default function SubmitForm() {
                 hint="as tagline"
               />
 
-              <div data-error={!!errors.opening_time} className="sm:col-span-2">
-                <label className="mb-1.5 block font-body text-sm font-semibold text-ink">Opening hours</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <select
-                    value={values.opening_time}
-                    onChange={(e) => set('opening_time', e.target.value)}
-                    className={inputCls('opening_time')}
-                  >
-                    <option value="">Opens…</option>
-                    {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <select
-                    value={values.closing_time}
-                    onChange={(e) => set('closing_time', e.target.value)}
-                    className={inputCls('closing_time')}
-                  >
-                    <option value="">Closes…</option>
-                    {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
+              <div data-error={!!errors.opening_time}>
+                <label className="mb-1.5 block font-body text-sm font-semibold text-ink">Opens</label>
+                <select
+                  value={values.opening_time}
+                  onChange={(e) => set('opening_time', e.target.value)}
+                  className={inputCls('opening_time')}
+                >
+                  <option value="">—</option>
+                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
                 <FieldError msg={errors.opening_time} />
               </div>
 
-              <div data-error={!!errors.website} className="sm:col-span-2">
+              <div>
+                <label className="mb-1.5 block font-body text-sm font-semibold text-ink">Closes</label>
+                <select
+                  value={values.closing_time}
+                  onChange={(e) => set('closing_time', e.target.value)}
+                  className={inputCls('closing_time')}
+                >
+                  <option value="">—</option>
+                  {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              <div data-error={!!errors.website}>
                 <label htmlFor="website" className="mb-1.5 block font-body text-sm font-semibold text-ink">Website</label>
                 <input
                   id="website"
@@ -853,7 +855,7 @@ export default function SubmitForm() {
                 <FieldError msg={errors.website} />
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <label htmlFor="description" className="mb-1.5 block font-body text-sm font-semibold text-ink">About your business</label>
                 <textarea
                   id="description"
@@ -879,7 +881,7 @@ export default function SubmitForm() {
               <span className="mb-1.5 block font-body text-sm font-semibold text-ink">
                 Photos ({images.length}/{MAX_IMAGES})
               </span>
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border-strong bg-subtle px-4 py-8 text-center transition hover:border-brand hover:bg-brand-soft/40">
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border-strong bg-subtle px-4 py-6 text-center transition hover:border-brand hover:bg-brand-soft/40">
                 <span className="text-2xl">📷</span>
                 <span className="font-body text-sm font-bold text-ink-soft">
                   {uploading ? 'Uploading…' : 'Click to add photos'}
@@ -927,7 +929,7 @@ export default function SubmitForm() {
               <h4 className="mb-3 font-body text-xs font-bold uppercase tracking-wider text-ink-muted">
                 Review your submission
               </h4>
-              <dl className="space-y-2 font-body text-sm">
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-2 font-body text-sm sm:grid-cols-2">
                 <ReviewRow label="Category" value={category ? categoryLabel(category) : '—'} />
                 <ReviewRow label="Name" value={values.submitter_name || '—'} />
                 <ReviewRow label="Phone" value={`${country.code} ${values.submitter_phone}`.trim() || '—'} />

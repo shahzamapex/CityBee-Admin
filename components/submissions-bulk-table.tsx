@@ -161,12 +161,25 @@ export default function BulkReviewTable({
                   <td className="px-4 py-3 text-xs text-ink-muted">
                     {new Date(row.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link
-                      href={`/submissions/${row.id}`}
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-brand"
+                      href={`/admin/submissions/${row.id}`}
+                      className="rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-ink-soft transition hover:text-brand"
                     >
                       View
+                    </Link>
+                    <Link
+                      href={`/admin/submissions/${row.id}/edit`}
+                      className="ml-1 rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-brand transition hover:bg-brand-soft/50"
+                    >
+                      Edit
+                    </Link>
+                    <Link
+                      href={`/admin/submissions/${row.id}`}
+                      className="ml-1 rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-rose transition hover:bg-rose/10"
+                      title="Open detail to delete"
+                    >
+                      Delete
                     </Link>
                   </td>
                 </tr>

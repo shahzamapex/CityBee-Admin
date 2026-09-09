@@ -329,3 +329,15 @@ export async function rejectSubmissionsBulk(ids: string[]): Promise<void> {
   revalidatePath('/admin/submissions');
   redirect(`/admin/submissions?rejected=${encodeURIComponent(`${ids.length}`)}`);
 }
+
+/** Delete a submission outright (spam/test entries). */
+export async function deleteSubmission(id: string): Promise<void> {
+  await requireAdmin();
+  await getAdminClient()
+    .from('business_submissions')
+    .delete()
+    .eq('id', id);
+
+  revalidatePath('/admin/submissions');
+  redirect('/admin/submissions?deleted=1');
+}
