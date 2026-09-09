@@ -20,11 +20,25 @@ interface SubmissionRow {
   city_slug: string | null;
   category_slug: string | null;
   opening_hours: string | null;
+  // Category-specific extras
+  specialization?: string | null;
+  qualification?: string | null;
+  experience_years?: number | null;
+  consultation_fee?: string | null;
+  cuisine?: string | null;
+  price_range?: string | null;
+  veg_type?: string | null;
+  hotel_type?: string | null;
+  check_in_time?: string | null;
+  check_out_time?: string | null;
+  amenities?: string | null;
+  image_urls?: string | null;
 }
 
 /**
- * Shared conversion: submission row → real business (+ category link).
- * Used by both single and bulk approve.
+ * Shared conversion: submission row → real business (+ category link,
+ * category-specific extension table, images). Used by single and bulk
+ * approve.
  */
 async function convertToBusiness(
   client: SupabaseClient,
@@ -59,12 +73,14 @@ async function convertToBusiness(
       opening_hours: submission.opening_hours,
       status: 'approved',
       is_verified: false,
+      is_pure_veg: submission.veg_type === 'veg',
     })
     .select('id')
     .single();
 
   if (insertError) throw new Error(insertError.message);
 
+  // Category link.
   if (submission.category_slug) {
     const { data: category } = await client
       .from('categories')
@@ -76,6 +92,79 @@ async function convertToBusiness(
         business_id: business.id,
         category_id: category.id,
       });
+    }
+  }
+
+  // ── Doctor extension row ──────────────────────────────────────────
+  if (submission.kind === 'doctor' && submission.specialization) {
+    await client.from('doctors').insert({
+      business_id: business.id,
+      name: submission.business_name,
+      specialization: submission.specialization,
+      qualification: submission.qualification,
+      experience_years: submission.experience_years ?? null,
+      consultation_fee: submission.consultation_fee,
+      bio: submission.description,
+    });
+  }
+
+  // ── Restaurant extension row ──────────────────────────────────────
+  if (submission.kind === 'restaurant' && (submission.cuisine || submission.veg_type)) {
+    await client.from('restaurants').insert({
+      business_id: business.id,
+      cuisine: submission.cuisine,
+      price_range: submission.price_range,
+      veg_type: submission.veg_type ?? 'mixed',
+    });
+  }
+
+  // ── Hotel extension row + amenities ───────────────────────────────
+  if (submission.kind === 'hotel' && submission.hotel_type) {
+    const { data: hotel, error: hotelError } = await client
+      .from('hotels')
+      .insert({
+        business_id: business.id,
+        hotel_type: submission.hotel_type,
+        price_range: submission.price_range,
+      })
+      .select('id')
+      .single();
+    if (hotelError) throw new Error(hotelError.message);
+
+    if (submission.amenities) {
+      const list = submission.amenities
+        .split(',')
+        .map((a) => a.trim())
+        .filter(Boolean)
+        .slice(0, 12);
+      if (list.length > 0) {
+        await client
+          .from('hotel_amenities')
+          .insert(list.map((amenity) => ({ hotel_id: hotel.id, amenity })));
+      }
+    }
+  }
+
+  // ── Images → business_images (max 5, first is primary) ────────────
+  if (submission.image_urls) {
+    try {
+      const urls = JSON.parse(submission.image_urls) as string[];
+      const valid = urls
+        .filter((u) => typeof u === 'string' && u.startsWith('https://'))
+        .slice(0, 5);
+      if (valid.length > 0) {
+        await client.from('business_images').insert(
+          valid.map((image_url, index) => ({
+            business_id: business.id,
+            image_url,
+            public_id: null, // linked to submission uploads, not deletable here
+            sort_order: index,
+            is_primary: index === 0,
+          })),
+        );
+      }
+    } catch {
+      // Malformed image JSON on an old submission — skip images, keep approval.
     }
   }
 }

@@ -18,7 +18,7 @@ const CATEGORY_KIND: Record<string, string> = {
   grocery: 'shop',
   malls: 'mall',
   cinemas: 'service',
-  heritage: 'service',
+  heritage: 'shop',
 };
 
 /** Country code → expected digit count (mirrors the form dropdown). */
@@ -30,10 +30,27 @@ const COUNTRY_DIGITS: Record<string, { min: number; max: number; starts: RegExp 
   '+966': { min: 9, max: 9, starts: /^[5]/ },
   '+61': { min: 9, max: 9, starts: /^[4]/ },
   '+92': { min: 10, max: 10, starts: /^[3]/ },
-  '+63': { min: 10, max: 10, starts: /^[9]/ },
-  '+60': { min: 9, max: 10, starts: /^[1]/ },
   '+977': { min: 10, max: 10, starts: /^[9]/ },
 };
+
+/** Allowed Cloudinary-hosted image URLs only. */
+function sanitizeImages(raw: string): string[] {
+  try {
+    const parsed = JSON.parse(raw) as { url?: unknown; publicId?: unknown }[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (img) =>
+          typeof img?.url === 'string' &&
+          /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(img.url) &&
+          typeof img?.publicId === 'string',
+      )
+      .slice(0, 5)
+      .map((img) => String(img.url));
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Public server action — anyone can submit a listing request.
@@ -86,6 +103,21 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
     return { ok: false, error: 'Website must be a full URL (https://…).' };
   }
 
+  if (category === 'doctors' && get('specialization').length < 2) {
+    return { ok: false, error: 'Please enter your specialization.' };
+  }
+  if (category === 'hotels' && get('hotel_type').length < 2) {
+    return { ok: false, error: 'Please choose the hotel type.' };
+  }
+
+  const experience_years = get('experience_years');
+  if (experience_years && (!/^\d+$/.test(experience_years) || Number(experience_years) > 60)) {
+    return { ok: false, error: 'Experience must be a number of years (0–60).' };
+  }
+
+  // ── Category-specific extras ────────────────────────────────────────
+  const amenities = formData.getAll('amenities').map(String).filter(Boolean).slice(0, 12);
+
   // ── Insert (RLS: anon may only insert here) ────────────────────────
   const { error } = await getPublicClient().from('business_submissions').insert({
     submitter_name,
@@ -102,6 +134,24 @@ export async function submitBusiness(formData: FormData): Promise<SubmitResult> 
     city_slug: get('city_slug') || 'moradabad',
     opening_hours: open && close ? `${open} – ${close}` : null,
     website: website || null,
+    // Doctor extras
+    specialization: category === 'doctors' ? get('specialization') : null,
+    qualification: category === 'doctors' ? get('qualification') || null : null,
+    experience_years: category === 'doctors' && experience_years ? Number(experience_years) : null,
+    consultation_fee: category === 'doctors' ? get('consultation_fee') || null : null,
+    // Restaurant extras
+    cuisine: category === 'dining' ? get('cuisine') || null : null,
+    price_range: category === 'dining' || category === 'hotels' ? get('price_range') || null : null,
+    veg_type: category === 'dining' ? get('veg_type') || null : null,
+    // Hotel extras
+    hotel_type: category === 'hotels' ? get('hotel_type') : null,
+    check_in_time: category === 'hotels' ? get('check_in_time') || null : null,
+    check_out_time: category === 'hotels' ? get('check_out_time') || null : null,
+    amenities: category === 'hotels' && amenities.length > 0 ? amenities.join(', ') : null,
+    // Images (validated Cloudinary URLs)
+    image_urls: sanitizeImages(get('images_json')).length > 0
+      ? JSON.stringify(sanitizeImages(get('images_json')))
+      : null,
   });
 
   if (error) {
