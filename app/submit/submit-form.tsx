@@ -276,30 +276,47 @@ export default function SubmitForm() {
         </div>
       )}
 
-      {/* ── 1. Category (live from DB, drives everything else) ── */}
+      {/* ── 1. Category dropdown (live from DB, drives everything else) ── */}
       <section className="space-y-4" data-error={!!errors.category}>
         <SectionHeader step="1" title="Choose a category" hint="This decides which details we ask for" />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-          {dbCategories.length === 0 && (
-            <div className="col-span-full flex items-center gap-2 rounded-lg border border-dashed border-border-strong px-4 py-4 font-body text-sm text-ink-muted">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-soft border-t-brand" />
-              Loading categories…
-            </div>
-          )}
-          {dbCategories.map((c) => (
-            <button
-              type="button"
-              key={c.slug}
-              onClick={() => setCategory(c.slug)}
-              className={`rounded-lg border px-3 py-2.5 text-left font-body text-xs font-semibold transition sm:text-sm ${
-                category === c.slug
-                  ? 'border-brand bg-brand-soft text-brand ring-2 ring-brand/15'
-                  : 'border-border-subtle bg-white text-ink-soft hover:border-brand/40'
-              }`}
+        <div className="relative">
+          <label htmlFor="category_select" className="mb-1.5 block font-body text-sm font-semibold text-ink">
+            Category <span className="text-brand">*</span>
+          </label>
+          <div className="relative">
+            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-ink-muted">
+              {category ? CATEGORY_META[category]?.emoji ?? '🗂️' : 'category'}
+            </span>
+            <select
+              id="category_select"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={dbCategories.length === 0}
+              className={`w-full appearance-none rounded-lg border bg-white py-2.5 pl-11 pr-10 font-body text-sm outline-none transition ${
+                errors.category
+                  ? 'border-rose/40 bg-rose/5 focus:border-rose focus:ring-2 focus:ring-rose/15'
+                  : 'border-border-strong focus:border-brand focus:ring-2 focus:ring-brand/15'
+              } ${category ? 'font-semibold text-ink' : 'text-ink-muted'}`}
             >
-              {categoryLabel(c.slug).replace(/^(\S+)\s/, '$1 ')}
-            </button>
-          ))}
+              <option value="" disabled>
+                {dbCategories.length === 0 ? 'Loading categories…' : 'Select a category…'}
+              </option>
+              {dbCategories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {categoryLabel(c.slug)}
+                </option>
+              ))}
+            </select>
+            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] text-ink-muted">
+              expand_more
+            </span>
+          </div>
+          {category && (
+            <p className="mt-1.5 flex items-center gap-1.5 font-body text-xs font-semibold text-emerald">
+              <span className="material-symbols-outlined text-[14px]">check_circle</span>
+              {categoryLabel(category)} selected
+            </p>
+          )}
         </div>
         <FieldError msg={errors.category} />
       </section>
