@@ -1,0 +1,27 @@
+{
+  "businesses": [
+    {
+      "name": "Hotel Brass Palace",
+      "kind": "hotel",
+      "tagline": "3-Star Hotel · Banquet · Multi-cuisine",
+      "description": "Comfortable stays near the railway station with in-house dining, banquet hall and 24x7 front desk.",
+      "phone": "+915912400929",
+      "whatsapp": "919876543210",
+      "address": "Station Road, Near Moradabad Junction, Moradabad, UP 248001",
+      "locality": "Station Road",
+      "latitude": 28.8385,
+      "longitude": 78.7683,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/hotel-room.jpg",
+        "https://example.com/hotel-lobby.jpg"
+      ],
+
+      "hotelType": "3-Star",
+      "priceRange": "₹1,400–₹2,800 / night",
+      "checkInTime": "12:00 PM",
+      "checkOutTime": "11:00 AM",
+      "amenities": ["Wi-Fi", "Restaurant", "Parking", "Room Service", "Banquet Hall"]
+    }
+  ]
+}

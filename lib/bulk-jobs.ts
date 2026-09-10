@@ -30,6 +30,13 @@ export interface BulkJobItem {
   qualification?: string;
   experienceYears?: number;
   consultationFee?: string;
+  cuisine?: string;
+  vegType?: string;
+  priceRange?: string;
+  hotelType?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  amenities?: string[];
 }
 
 export interface BulkJobResultItem {

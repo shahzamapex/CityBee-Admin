@@ -1,0 +1,20 @@
+{
+  "businesses": [
+    {
+      "name": "Glow & Glam Bridal Studio",
+      "kind": "salon",
+      "tagline": "Bridal makeup · Salon · Spa",
+      "description": "Bridal packages, party makeup and skincare by certified artists. Prior appointment recommended.",
+      "phone": "+915912400818",
+      "whatsapp": "919876543210",
+      "address": "2nd Floor, Rani Jhansi Plaza, Kanth Road, Moradabad, UP 248001",
+      "locality": "Kanth Road",
+      "latitude": 28.8443,
+      "longitude": 78.7901,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/salon-interior.jpg"
+      ]
+    }
+  ]
+}

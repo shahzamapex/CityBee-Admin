@@ -1,0 +1,26 @@
+{
+  "businesses": [
+    {
+      "name": "Dr. Anil Verma Dental Clinic",
+      "kind": "doctor",
+      "tagline": "Dentist · Painless dentistry",
+      "description": "Painless dentistry — cleaning, fillings, braces and implants. Walk-ins welcome.",
+      "phone": "+915912400585",
+      "whatsapp": "919812345678",
+      "address": "1st Floor, Harvard Tower, Court Road, Moradabad, UP 248001",
+      "locality": "Court Road",
+      "latitude": 28.8388,
+      "longitude": 78.7769,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/clinic-front.jpg"
+      ],
+
+      "doctorName": "Dr. Anil Verma",
+      "specialization": "Dentist",
+      "qualification": "BDS, MDS — Prosthodontics",
+      "experienceYears": 12,
+      "consultationFee": "₹300"
+    }
+  ]
+}

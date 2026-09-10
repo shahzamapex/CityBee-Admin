@@ -1,0 +1,20 @@
+{
+  "businesses": [
+    {
+      "name": "Wave Cinemas — City Central",
+      "kind": "service",
+      "tagline": "Multiplex · 4 Screens · Dolby Atmos",
+      "description": "First-run Hindi & English films on four screens with recliner seating and an in-house snack bar.",
+      "phone": "+915912401252",
+      "whatsapp": "919876543210",
+      "address": "3rd Floor, City Central Mall, Sambhal Road, Moradabad, UP 248001",
+      "locality": "Sambhal Road",
+      "latitude": 28.8189,
+      "longitude": 78.7823,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/cinema-screen.jpg"
+      ]
+    }
+  ]
+}

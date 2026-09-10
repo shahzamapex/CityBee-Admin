@@ -1,0 +1,20 @@
+{
+  "businesses": [
+    {
+      "name": "Trends N Threads Boutique",
+      "kind": "shop",
+      "tagline": "Boutique · Designer Wear · Alterations",
+      "description": "Designer suits, lehengas and bespoke tailoring by local craftsmen. Same-day alterations available.",
+      "phone": "+915912400696",
+      "whatsapp": "919876543210",
+      "address": "B-14, Subhash Nagar, Moradabad, UP 248001",
+      "locality": "Subhash Nagar",
+      "latitude": 28.8221,
+      "longitude": 78.7768,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/boutique-collection.jpg"
+      ]
+    }
+  ]
+}

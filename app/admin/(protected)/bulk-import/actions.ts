@@ -66,6 +66,18 @@ export async function queueBulkImport(rawJson: string): Promise<QueueResult> {
       qualification: typeof item.qualification === 'string' ? item.qualification : undefined,
       experienceYears: typeof item.experienceYears === 'number' ? item.experienceYears : undefined,
       consultationFee: typeof item.consultationFee === 'string' ? item.consultationFee : undefined,
+      cuisine: typeof item.cuisine === 'string' ? item.cuisine : undefined,
+      vegType:
+        typeof item.vegType === 'string' && ['veg', 'non_veg', 'mixed'].includes(item.vegType)
+          ? item.vegType
+          : undefined,
+      priceRange: typeof item.priceRange === 'string' ? item.priceRange : undefined,
+      hotelType: typeof item.hotelType === 'string' ? item.hotelType : undefined,
+      checkInTime: typeof item.checkInTime === 'string' ? item.checkInTime : undefined,
+      checkOutTime: typeof item.checkOutTime === 'string' ? item.checkOutTime : undefined,
+      amenities: Array.isArray(item.amenities)
+        ? item.amenities.filter((a): a is string => typeof a === 'string' && a.trim().length > 0).slice(0, 12)
+        : undefined,
     });
   }
 

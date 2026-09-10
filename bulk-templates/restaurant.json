@@ -1,0 +1,25 @@
+{
+  "businesses": [
+    {
+      "name": "Royal Restaurant & Banquet",
+      "kind": "restaurant",
+      "tagline": "Mughlai · Awadhi · North Indian",
+      "description": "A Moradabad landmark for Mughlai dining and grand banquets. Family dining hall and pure-veg kitchen.",
+      "phone": "+915912400161",
+      "whatsapp": "919876543210",
+      "address": "16B, Delhi Road, Near Majhola Chauraha, Civil Lines, Moradabad, UP 248001",
+      "locality": "Civil Lines",
+      "latitude": 28.8371,
+      "longitude": 78.7759,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/restaurant-hall.jpg",
+        "https://example.com/restaurant-food.jpg"
+      ],
+
+      "cuisine": "Mughlai, Awadhi, North Indian",
+      "vegType": "mixed",
+      "priceRange": "₹₹"
+    }
+  ]
+}

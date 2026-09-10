@@ -1,0 +1,21 @@
+{
+  "businesses": [
+    {
+      "name": "City Central Mall",
+      "kind": "mall",
+      "tagline": "Shopping · Food Court · Multiplex",
+      "description": "Moradabad's destination mall with retail stores, food court and cinema. Ample parking available.",
+      "phone": "+915912401141",
+      "whatsapp": "919876543210",
+      "address": "Sambhal Road, Moradabad, UP 248001",
+      "locality": "Sambhal Road",
+      "latitude": 28.8188,
+      "longitude": 78.7822,
+      "googlePlaceId": null,
+      "imageUrls": [
+        "https://example.com/mall-exterior.jpg",
+        "https://example.com/mall-foodcourt.jpg"
+      ]
+    }
+  ]
+}
