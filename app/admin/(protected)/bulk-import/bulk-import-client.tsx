@@ -3,6 +3,13 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { queueBulkImport } from './actions';
 import { pollJobs } from './poll';
+import doctorTemplate from '@/bulk-templates/doctor.json';
+import restaurantTemplate from '@/bulk-templates/restaurant.json';
+import hotelTemplate from '@/bulk-templates/hotel.json';
+import salonTemplate from '@/bulk-templates/salon.json';
+import shopTemplate from '@/bulk-templates/shop.json';
+import mallTemplate from '@/bulk-templates/mall.json';
+import serviceTemplate from '@/bulk-templates/service.json';
 
 interface JobView {
   id: string;
@@ -41,6 +48,18 @@ const SAMPLE_JSON = `[
     "address": "2nd Floor, Harvard Tower, Court Road, Moradabad"
   }
 ]`;
+
+/** Kind-wise full-detail templates (bulk-templates/*.json). */
+const TEMPLATES: { key: string; label: string; json: unknown }[] = [
+  { key: 'doctor', label: '🩺 Doctor (specialization, fee…)', json: doctorTemplate },
+  { key: 'restaurant', label: '🍕 Restaurant (cuisine, vegType…)', json: restaurantTemplate },
+  { key: 'hotel', label: '🏨 Hotel (type, check-in, amenities…)', json: hotelTemplate },
+  { key: 'salon', label: '💇 Salon / Barber', json: salonTemplate },
+  { key: 'shop', label: '🛍️ Shop (Fashion / Grocery)', json: shopTemplate },
+  { key: 'mall', label: '🏬 Mall', json: mallTemplate },
+  { key: 'service', label: '🎬 Service (Cinema…)', json: serviceTemplate },
+  { key: 'sample', label: '📝 Quick sample (2 items)', json: null },
+];
 
 /**
  * Bulk import UI: paste JSON → queued job → sequential processing with
@@ -101,15 +120,28 @@ export default function BulkImportClient({
       <div className="grid gap-5 lg:grid-cols-2">
         {/* ── Paste panel ────────────────────────────────────────── */}
         <div className="rounded-xl border border-border-subtle bg-white p-5 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="font-headline text-base font-semibold text-ink">Paste JSON</h3>
-            <button
-              type="button"
-              onClick={() => setJson(SAMPLE_JSON)}
-              className="rounded-lg border border-border-strong px-3 py-1 font-body text-xs font-semibold text-ink-soft transition hover:bg-subtle"
-            >
-              Insert sample
-            </button>
+            <label className="flex items-center gap-1.5">
+              <span className="font-body text-xs font-semibold text-ink-muted">Template:</span>
+              <select
+                value=""
+                onChange={(e) => {
+                  const t = TEMPLATES.find((x) => x.key === e.target.value);
+                  if (!t) return;
+                  setJson(t.json ? JSON.stringify(t.json, null, 2) : SAMPLE_JSON);
+                  if (error) setError(null);
+                }}
+                className="rounded-lg border border-border-strong bg-white px-2.5 py-1 font-body text-xs font-semibold text-ink-soft outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
+              >
+                <option value="">Load…</option>
+                {TEMPLATES.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <textarea
             value={json}
