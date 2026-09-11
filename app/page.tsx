@@ -86,7 +86,7 @@ export default async function HomePage() {
               Categories
             </a>
             <Link
-              href="/submit"
+              href="/admin/login"
               className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-hover"
             >
               List Your Business
@@ -111,7 +111,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/submit"
+              href="/admin/login"
               className="rounded-2xl bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-md shadow-brand/25 transition hover:bg-brand-hover active:scale-[0.98]"
             >
               + List Your Business — Free
@@ -172,7 +172,7 @@ export default async function HomePage() {
                 No businesses listed yet — be the first!
               </p>
               <Link
-                href="/submit"
+                href="/admin/login"
                 className="mt-4 inline-block rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-hover"
               >
                 List Your Business
@@ -225,7 +225,7 @@ export default async function HomePage() {
             CityBee for free. Takes less than two minutes.
           </p>
           <Link
-            href="/submit"
+            href="/admin/login"
             className="mt-6 inline-block rounded-2xl bg-white px-8 py-3.5 text-sm font-extrabold text-brand shadow-lg transition hover:bg-brand-soft/50 active:scale-[0.98]"
           >
             List Your Business →
@@ -243,7 +243,7 @@ export default async function HomePage() {
             </span>
           </div>
           <div className="flex items-center gap-5 text-xs font-bold text-ink-muted">
-            <Link href="/submit" className="transition hover:text-brand">List Business</Link>
+            <Link href="/admin/login" className="transition hover:text-brand">List Business</Link>
             <Link href="/admin" className="transition hover:text-brand">Admin</Link>
           </div>
           <p className="text-xs text-ink-muted">

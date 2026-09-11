@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminCookieName, isValidSession } from '@/lib/session';
 
 /**
- * Edge middleware: everything public stays public (/, /submit, /api/*).
+ * Edge middleware: everything public stays public (/, /api/*).
  * Only /admin/* requires a session — except /admin/login itself.
  *
  * Two cookie formats:

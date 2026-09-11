@@ -1,11 +1,10 @@
 import AdminSidebar from '@/components/admin-sidebar';
 import AdminHeader from '@/components/admin-header';
-import AdminContent from '@/components/admin-content';
 import { getAdminClient } from '@/lib/supabase';
 
 /**
- * Layout for the authenticated admin area: fixed UrbanPulse-style rail
- * + fixed glass header + fluid content viewport.
+ * Authenticated admin area shell (21st.dev pattern): collapsible sidebar
+ * rail + sticky top bar + fluid content viewport, laid out as a flex row.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Pending-submission badge (server-rendered, fresh per navigation).
@@ -21,14 +20,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen bg-canvas">
       <AdminSidebar pendingSubmissions={pending} />
-      <AdminContent>
+      <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader pendingSubmissions={pending} />
-        <main className="min-h-screen w-full bg-canvas px-4 pb-12 pt-20 md:px-6">
-          {children}
-        </main>
-      </AdminContent>
+        <main className="w-full flex-1 px-4 pb-12 pt-6 md:px-6">{children}</main>
+      </div>
     </div>
   );
 }

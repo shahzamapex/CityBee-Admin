@@ -3,181 +3,246 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getSidebarGroups } from '@/lib/sidebar-groups';
+import { getSidebarGroups, type SidebarItem } from '@/lib/sidebar-groups';
 
 /** Material Symbols icon per entity key (mirrors the reference portal). */
 const ICONS: Record<string, string> = {
   dashboard: 'space_dashboard',
+  submissions: 'move_to_inbox',
   businesses: 'storefront',
-  submissions: 'verified_user',
+  'discovery': 'travel_explore',
   offers: 'local_offer',
   places: 'explore',
-  cities: 'cloud_upload',
   categories: 'category',
-  users: 'group',
+  cities: 'location_city',
+  'bulk-import': 'cloud_upload',
+  community: 'forum',
   reviews: 'reviews',
   notifications: 'notifications',
   'business-claims': 'gavel',
-  'bulk-import': 'cloud_upload',
+  users: 'group',
 };
 
-const STORAGE_KEY = 'cb_admin_sidebar_collapsed';
+const STORAGE_KEY = 'cb_admin_sidebar_open';
 
 /**
- * Collapsible UrbanPulse-style sidebar. Toggle (in the brand row and as a
- * floating edge handle when collapsed) switches between the full 16rem rail
- * and an icon-only 4rem rail; the choice persists in localStorage.
+ * Multi-tier sidebar (21st.dev "Dashboard Sidebar" pattern): grouped
+ * sections with expandable parents, nested children on a vertical guide
+ * line, soft-wash active states, pinned footer — all in CityBee colors.
+ * The whole rail collapses to zero width; the header keeps the toggle.
  */
 export default function AdminSidebar({ pendingSubmissions }: { pendingSubmissions: number }) {
   const pathname = usePathname();
   const groups = getSidebarGroups();
-  const [collapsed, setCollapsed] = useState(false);
+  const [open, setOpen] = useState(true);
 
-  // Restore + persist across refreshes / navigations.
+  // Rail collapse (driven by the header toggle, persisted in localStorage).
   useEffect(() => {
-    setCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
+    const sync = () => setOpen(localStorage.getItem(STORAGE_KEY) !== '0');
+    sync();
+    window.addEventListener('cb-sidebar-toggle', sync);
+    return () => window.removeEventListener('cb-sidebar-toggle', sync);
   }, []);
-  const toggle = () => {
-    setCollapsed((c) => {
-      localStorage.setItem(STORAGE_KEY, c ? '0' : '1');
-      return !c;
-    });
-    // Sync the content wrapper's margin in the same tab.
-    window.dispatchEvent(new Event('cb-sidebar-toggle'));
-  };
 
-  function isActive(href: string): boolean {
+  // Which tier-2 parents are expanded (keyed by parent key).
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  // Auto-expand any parent whose child is the active route (once, on mount).
+  useEffect(() => {
+    setExpanded(() => {
+      const next: Record<string, boolean> = {};
+      for (const g of groups) {
+        for (const item of g.items) {
+          if (item.children?.some((c) => isActive(pathname, c.href))) {
+            next[item.key] = true;
+          }
+        }
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  function isActivePath(href: string): boolean {
     if (href === '/admin') return pathname === '/admin';
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
+  const toggle = (key: string) =>
+    setExpanded((e) => ({ ...e, [key]: !e[key] }));
+
   return (
     <aside
-      className={`fixed left-0 top-0 z-50 flex h-full flex-col justify-between overflow-y-auto border-r border-border-subtle bg-white shadow-nav transition-[width] duration-200 ${
-        collapsed ? 'w-16' : 'w-64'
+      className={`sticky top-0 z-50 flex h-screen shrink-0 flex-col overflow-hidden border-r bg-surface transition-all duration-300 ${
+        open ? 'w-[260px] border-border-subtle opacity-100' : 'w-0 border-transparent opacity-0'
       }`}
     >
-      <div className="flex flex-col">
-        {/* ── Brand + collapse toggle ──────────────────────────────── */}
-        <div className="flex h-16 items-center gap-3 px-3">
-          <button
-            type="button"
-            onClick={toggle}
-            title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-            aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white transition hover:bg-brand-hover"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {collapsed ? 'menu' : 'menu_open'}
-            </span>
-          </button>
-          {!collapsed && (
-            <div className="flex flex-col overflow-hidden">
-              <div className="flex items-center gap-1.5">
-                <span className="font-headline text-[15px] font-semibold tracking-tight text-ink">
-                  CityBee
-                </span>
-                <span className="rounded bg-subtle px-1.5 py-0.5 font-body text-[10px] font-semibold tracking-wide text-brand">
-                  v2.0
-                </span>
-              </div>
-            </div>
-          )}
+      {/* ── Brand ─────────────────────────────────────────────────── */}
+      <div className="flex h-16 shrink-0 items-center gap-2.5 px-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-[13px] font-extrabold text-white">
+          CB
         </div>
+        <div className="flex min-w-0 flex-col">
+          <span className="font-headline text-[15px] font-semibold leading-tight tracking-tight text-ink">
+            CityBee
+          </span>
+          <span className="font-body text-[10.5px] leading-tight text-ink-muted">
+            Admin Panel · v2.0
+          </span>
+        </div>
+      </div>
 
-        {/* ── Grouped nav ───────────────────────────────────────── */}
-        <div className="flex flex-col gap-6 px-2 py-4">
-          {groups.map((group) => (
-            <div key={group.title} className="flex flex-col gap-1">
-              {!collapsed && (
-                <span className="px-2 pb-1 font-body text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+      {/* ── Scrollable nav (scrollbars hidden) ─────────────────────── */}
+      <nav className="scrollbar-none flex-1 overflow-y-auto px-3 pb-4">
+        <div className="flex flex-col gap-4 pt-2">
+          {groups.map((group, gi) => (
+            <div key={group.title || gi} className="flex flex-col gap-1">
+              {group.title ? (
+                <span className="px-2.5 pb-0.5 font-body text-[11px] font-semibold uppercase tracking-wider text-ink-muted/70">
                   {group.title}
                 </span>
-              )}
-              <nav className="flex flex-col gap-0.5">
-                {groups && group.items.map((item) => {
-                  const active = isActive(item.href);
-                  const badge =
-                    item.key === 'submissions' && pendingSubmissions > 0 ? pendingSubmissions : null;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      title={collapsed ? item.label : undefined}
-                      className={`flex items-center rounded-lg px-3 py-2 transition-all ${
-                        active
-                          ? 'bg-brand font-semibold text-white shadow-[0_1px_3px_0_rgba(15,23,42,0.05)]'
-                          : 'text-ink-soft hover:bg-subtle hover:text-ink'
-                      }`}
-                    >
-                      <div className={`flex items-center ${collapsed ? 'w-full justify-center' : 'justify-between'}`}>
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[20px]">
-                            {ICONS[item.key] ?? 'description'}
-                          </span>
-                          {!collapsed && <span className="font-body text-sm">{item.label}</span>}
-                        </div>
-                        {badge !== null && !collapsed && (
-                          <span
-                            className={`rounded-full px-1.5 py-0.5 font-body text-[10px] font-semibold leading-4 ${
-                              active
-                                ? 'bg-white/20 text-white'
-                                : 'bg-rose/10 text-rose'
-                            }`}
-                          >
-                            {badge}
-                          </span>
-                        )}
-                      </div>
-                      {badge !== null && collapsed && (
-                        <span className="pointer-events-none absolute right-2 top-2 h-2 w-2 rounded-full bg-rose" />
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
+              ) : null}
+              {group.items.map((item) => (
+                <NavItem
+                  key={item.key}
+                  item={item}
+                  active={isActivePath(item.href)}
+                  expanded={!!expanded[item.key]}
+                  onToggle={() => toggle(item.key)}
+                  badge={item.key === 'submissions' && pendingSubmissions > 0 ? pendingSubmissions : null}
+                  isActivePath={isActivePath}
+                />
+              ))}
             </div>
           ))}
         </div>
-      </div>
+      </nav>
 
-      {/* ── Footer: live status + actions ──────────────────────── */}
-      <div className="sticky bottom-0 flex flex-col gap-2 bg-white p-2">
+      {/* ── Pinned footer ──────────────────────────────────────────── */}
+      <div className="mt-auto shrink-0 border-t border-border-subtle p-3">
         <Link
-          href="/submit"
-          target="_blank"
-          title={collapsed ? 'Public Form' : undefined}
-          className={`flex items-center rounded-lg px-3 py-2 text-ink-soft transition hover:bg-subtle hover:text-ink ${
-            collapsed ? 'justify-center' : 'gap-3'
-          }`}
+          href="/admin/notifications"
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-ink-soft transition hover:bg-subtle hover:text-ink"
         >
-          <span className="material-symbols-outlined text-[20px]">open_in_new</span>
-          {!collapsed && <span className="font-body text-sm">Public Form</span>}
+          <span className="material-symbols-outlined text-[16px] opacity-70">settings</span>
+          <span className="font-body text-[13px]">Settings</span>
         </Link>
         <form action="/api/logout" method="post">
-          <button
-            title={collapsed ? 'Sign out' : undefined}
-            className={`flex w-full items-center rounded-lg px-3 py-2 text-ink-soft transition hover:bg-rose/5 hover:text-rose ${
-              collapsed ? 'justify-center' : 'gap-3'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            {!collapsed && <span className="font-body text-sm">Sign out</span>}
+          <button className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[7px] text-ink-soft transition hover:bg-rose/5 hover:text-rose">
+            <span className="material-symbols-outlined text-[16px] opacity-70">logout</span>
+            <span className="font-body text-[13px]">Sign out</span>
           </button>
         </form>
-        {!collapsed && (
-          <div className="mx-1 mb-1 flex items-center justify-between rounded-xl bg-subtle px-3 py-2.5">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald" />
-              <div className="flex flex-col">
-                <span className="font-body text-[12px] font-semibold text-ink">Database Live</span>
-                <span className="font-body text-[10px] tabular-nums text-ink-soft">Supabase connected</span>
-              </div>
+        <div className="mx-1 mb-1 mt-2 flex items-center justify-between rounded-lg bg-subtle px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald" />
+            <div className="flex flex-col">
+              <span className="font-body text-[11px] font-semibold leading-tight text-ink">Database Live</span>
+              <span className="font-body text-[9.5px] leading-tight text-ink-soft">Supabase connected</span>
             </div>
-            <span className="material-symbols-outlined text-[18px] text-ink-muted">dns</span>
           </div>
-        )}
+          <span className="material-symbols-outlined text-[15px] text-ink-muted">dns</span>
+        </div>
       </div>
     </aside>
   );
+}
+
+/** One nav row — leaf links navigate; parents expand their children. */
+function NavItem({
+  item,
+  active,
+  expanded,
+  onToggle,
+  badge,
+  isActivePath,
+}: {
+  item: SidebarItem;
+  active: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  badge: number | null;
+  isActivePath: (href: string) => boolean;
+}) {
+  const hasChildren = !!item.children?.length;
+  const content = (
+    <>
+      <span className="material-symbols-outlined text-[16px] opacity-70">
+        {ICONS[item.key] ?? 'description'}
+      </span>
+      <span className="truncate font-body text-[13px] tracking-[0.01em]">{item.label}</span>
+      {badge !== null && (
+        <span className="ml-auto rounded-full bg-brand/10 px-1.5 py-0.5 font-body text-[10px] font-semibold leading-4 text-brand">
+          {badge}
+        </span>
+      )}
+      {hasChildren && badge === null && (
+        <span
+          className={`material-symbols-outlined ml-auto text-[15px] text-ink-muted transition-transform duration-300 ${
+            expanded ? 'rotate-90' : ''
+          }`}
+        >
+          chevron_right
+        </span>
+      )}
+    </>
+  );
+
+  const rowCls = `flex items-center gap-2.5 rounded-md px-2.5 py-[7px] transition ${
+    active && !hasChildren
+      ? 'bg-brand-soft font-medium text-brand'
+      : 'text-ink-soft hover:bg-subtle hover:text-ink'
+  }`;
+
+  return (
+    <div>
+      {hasChildren ? (
+        <button type="button" onClick={onToggle} className={`${rowCls} w-full text-left`}>
+          {content}
+        </button>
+      ) : (
+        <Link href={item.href} className={rowCls}>
+          {content}
+        </Link>
+      )}
+
+      {/* Tier-2 children — indented on a vertical guide line */}
+      {hasChildren && (
+        <div
+          className={`grid transition-all duration-300 ${
+            expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="ml-[19px] mt-0.5 flex flex-col gap-0.5 border-l border-border-subtle py-0.5 pl-3">
+              {item.children!.map((child) => {
+                const childActive = isActivePath(child.href);
+                return (
+                  <Link
+                    key={child.key}
+                    href={child.href}
+                    className={`flex items-center gap-2 rounded-md px-2.5 py-[6px] transition ${
+                      childActive
+                        ? 'bg-brand-soft font-medium text-brand'
+                        : 'text-ink-soft hover:bg-subtle hover:text-ink'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[15px] opacity-70">
+                      {ICONS[child.key] ?? 'description'}
+                    </span>
+                    <span className="truncate font-body text-[12.5px]">{child.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function isActive(pathname: string, href: string): boolean {
+  if (href === '/admin') return pathname === '/admin';
+  return pathname === href || pathname.startsWith(`${href}/`);
 }

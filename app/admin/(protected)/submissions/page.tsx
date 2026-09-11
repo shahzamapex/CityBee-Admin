@@ -40,16 +40,9 @@ export default async function SubmissionsPage({
         <div>
           <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">Submissions</h1>
           <p className="mt-0.5 font-body text-sm text-ink-soft">
-            Customer requests from the public form — select multiple and approve in bulk.
+            Customer requests from the app — select multiple and approve in bulk.
           </p>
         </div>
-        <Link
-          href="/submit"
-          target="_blank"
-          className="rounded-lg border border-border-strong bg-white px-4 py-2 font-body text-sm font-semibold text-ink transition hover:bg-subtle"
-        >
-          🔗 View public form ↗
-        </Link>
       </div>
 
       {/* ── Banners ─────────────────────────────────────────── */}

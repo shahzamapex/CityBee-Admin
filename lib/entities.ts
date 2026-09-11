@@ -34,6 +34,8 @@ export interface Field {
   help?: string;
   /** For uuid fields: parent table to populate the select. */
   lookups?: FieldLookup[];
+  /** Only render when the business `kind` select matches one of these. */
+  kindOnly?: string[];
 }
 
 export interface Entity {
@@ -132,6 +134,37 @@ export const entities: Entity[] = [
         { value: 'rejected', label: 'Rejected' },
         { value: 'inactive', label: 'Inactive' },
       ]},
+
+      // ── Kind-specific details (shown/hidden by the kind select) ──────
+      // Doctor extension
+      { name: 'doctorName', label: 'Doctor Name', type: 'text', kindOnly: ['doctor'], placeholder: 'Dr. Anil Verma' },
+      { name: 'specialization', label: 'Specialization', type: 'text', kindOnly: ['doctor'], placeholder: 'Dentist, Cardiologist…' },
+      { name: 'qualification', label: 'Qualification', type: 'text', kindOnly: ['doctor'], placeholder: 'MBBS, MD…' },
+      { name: 'experienceYears', label: 'Experience (years)', type: 'number', kindOnly: ['doctor'] },
+      { name: 'consultationFee', label: 'Consultation Fee', type: 'text', kindOnly: ['doctor'], placeholder: '₹300' },
+      // Restaurant extension
+      { name: 'cuisine', label: 'Cuisines', type: 'text', kindOnly: ['restaurant'], placeholder: 'Mughlai, North Indian…' },
+      { name: 'vegType', label: 'Food Type', type: 'select', kindOnly: ['restaurant'], options: [
+        { value: 'veg', label: 'Pure Veg' },
+        { value: 'non_veg', label: 'Non-Veg' },
+        { value: 'mixed', label: 'Mixed' },
+      ]},
+      { name: 'priceRange', label: 'Price Range', type: 'text', kindOnly: ['restaurant', 'hotel'], placeholder: '₹₹ / ₹1,400–₹2,800 per night' },
+      // Hotel extension
+      { name: 'hotelType', label: 'Hotel Type', type: 'select', kindOnly: ['hotel'], options: [
+        { value: '1-Star', label: '1-Star' },
+        { value: '2-Star', label: '2-Star' },
+        { value: '3-Star', label: '3-Star' },
+        { value: '4-Star', label: '4-Star' },
+        { value: '5-Star', label: '5-Star' },
+        { value: 'Boutique', label: 'Boutique' },
+        { value: 'Guest House', label: 'Guest House' },
+        { value: 'Homestay', label: 'Homestay' },
+        { value: 'Resort', label: 'Resort' },
+      ]},
+      { name: 'checkInTime', label: 'Check-in Time', type: 'text', kindOnly: ['hotel'], placeholder: '12:00 PM' },
+      { name: 'checkOutTime', label: 'Check-out Time', type: 'text', kindOnly: ['hotel'], placeholder: '11:00 AM' },
+      { name: 'amenities', label: 'Amenities (comma separated)', type: 'text', kindOnly: ['hotel'], placeholder: 'Wi-Fi, Parking, Room Service' },
     ],
     lookups: [{ field: 'city_id', table: 'cities', label: 'name' }],
   },

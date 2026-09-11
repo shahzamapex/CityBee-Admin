@@ -4,6 +4,7 @@ import { getEntity } from '@/lib/entities';
 import { getSelectOptions } from '@/lib/data';
 import { createRow } from '../actions';
 import EntityForm from '@/components/entity-form';
+import KindFields from '@/components/kind-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,10 +54,12 @@ export default async function NewEntityPage({
       )}
 
       <form
+        data-entity-form
         action={submit}
         className="space-y-6 rounded-xl border border-border-subtle bg-white p-6 shadow-sm"
       >
         <EntityForm entity={entity} uuidOptions={uuidOptions} />
+        <KindFields />
         <div className="flex justify-end gap-3 border-t border-stone-100 pt-5">
           <Link
             href={`/admin/${entity.key}`}

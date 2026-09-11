@@ -1,12 +1,142 @@
 'use server';
 
 import { getAdminClient } from '@/lib/supabase';
-import { adminCreate, adminUpdate, adminDelete } from '@/lib/backend';
+import { adminDelete } from '@/lib/backend';
 import { requireAdmin } from '@/lib/auth';
 import { getEntity } from '@/lib/entities';
 import { formToPayload } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
+/** Kind-specific form fields that live in extension tables, not businesses. */
+const EXTENSION_KEYS = [
+  'doctorName', 'specialization', 'qualification', 'experienceYears', 'consultationFee',
+  'cuisine', 'vegType', 'priceRange', 'hotelType', 'checkInTime', 'checkOutTime', 'amenities',
+] as const;
+
+/** kind → discovery category slug (restaurant maps to the dining category). */
+const KIND_CATEGORY: Record<string, string> = {
+  doctor: 'doctors',
+  restaurant: 'dining',
+  hotel: 'hotels',
+  salon: 'salons',
+  mall: 'malls',
+};
+
+/** "12:00 PM" / "23:45" → Postgres time string; null when unparsable. */
+function toTime(s: unknown): string | null {
+  if (typeof s !== 'string' || !s.trim()) return null;
+  const m = s.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const ap = m[3]?.toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12;
+  if (ap === 'am' && h === 12) h = 0;
+  if (h > 23) return null;
+  return `${String(h).padStart(2, '0')}:${m[2]}:00`;
+}
+
+type Ext = Partial<Record<(typeof EXTENSION_KEYS)[number], unknown>>;
+
+/** Splits the form payload into business columns + extension extras. */
+function splitPayload(payload: Record<string, unknown>): {
+  base: Record<string, unknown>;
+  ext: Ext;
+} {
+  const base: Record<string, unknown> = {};
+  const ext: Ext = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if ((EXTENSION_KEYS as readonly string[]).includes(k)) ext[k as keyof Ext] = v;
+    else base[k] = v;
+  }
+  return { base, ext };
+}
+
+/** Writes the kind extension row(s) (doctors/restaurants/hotels + amenities). */
+async function upsertExtension(
+  businessId: string,
+  kind: string,
+  ext: Ext,
+): Promise<string | null> {
+  const client = getAdminClient();
+  if (kind === 'doctor' && (ext.specialization || ext.qualification || ext.consultationFee)) {
+    const { error } = await client.from('doctors').upsert(
+      {
+        business_id: businessId,
+        name: (ext.doctorName as string) ?? '',
+        specialization: (ext.specialization as string) ?? '',
+        qualification: (ext.qualification as string) ?? null,
+        experience_years:
+          ext.experienceYears != null && ext.experienceYears !== ''
+            ? Number(ext.experienceYears)
+            : null,
+        consultation_fee: (ext.consultationFee as string) ?? null,
+      },
+      { onConflict: 'business_id' },
+    );
+    if (error) return error.message;
+  }
+  if (kind === 'restaurant' && (ext.cuisine || ext.vegType || ext.priceRange)) {
+    const { error } = await client.from('restaurants').upsert(
+      {
+        business_id: businessId,
+        cuisine: (ext.cuisine as string) ?? null,
+        price_range: (ext.priceRange as string) ?? null,
+        veg_type: (ext.vegType as string) ?? 'mixed',
+      },
+      { onConflict: 'business_id' },
+    );
+    if (error) return error.message;
+  }
+  if (kind === 'hotel' && (ext.hotelType || ext.priceRange)) {
+    const { data: hotel, error: hotelError } = await client
+      .from('hotels')
+      .upsert(
+        {
+          business_id: businessId,
+          hotel_type: (ext.hotelType as string) ?? null,
+          price_range: (ext.priceRange as string) ?? null,
+          check_in: toTime(ext.checkInTime),
+          check_out: toTime(ext.checkOutTime),
+        },
+        { onConflict: 'business_id' },
+      )
+      .select('id')
+      .single();
+    if (hotelError) return hotelError.message;
+
+    const list =
+      typeof ext.amenities === 'string'
+        ? ext.amenities.split(',').map((a) => a.trim()).filter(Boolean).slice(0, 12)
+        : [];
+    if (hotel && list.length > 0) {
+      await client.from('hotel_amenities').delete().eq('hotel_id', hotel.id);
+      const { error: amenityError } = await client
+        .from('hotel_amenities')
+        .insert(list.map((amenity) => ({ hotel_id: hotel.id, amenity })));
+      if (amenityError) return amenityError.message;
+    }
+  }
+  return null;
+}
+
+/** Links the business to its discovery category (kind → slug). */
+async function linkCategory(businessId: string, kind: string): Promise<string | null> {
+  const slug = KIND_CATEGORY[kind];
+  if (!slug) return null;
+  const client = getAdminClient();
+  const { data: category } = await client
+    .from('categories')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!category) return null;
+  const { error } = await client
+    .from('business_categories')
+    .insert({ business_id: businessId, category_id: category.id });
+  if (error && !error.message.includes('duplicate')) return error.message;
+  return null;
+}
 
 export async function createRow(entityKey: string, form: FormData): Promise<void> {
   await requireAdmin();
@@ -14,6 +144,25 @@ export async function createRow(entityKey: string, form: FormData): Promise<void
   if (!entity) throw new Error('Unknown entity');
 
   const payload = formToPayload(entity, form, true);
+
+  if (entityKey === 'businesses') {
+    const { base, ext } = splitPayload(payload);
+    const { data: row, error } = await getAdminClient()
+      .from('businesses')
+      .insert(base)
+      .select('id')
+      .single();
+    if (error || !row) {
+      redirect(`/admin/${entityKey}/new?error=${encodeURIComponent(error?.message ?? 'Insert failed')}`);
+    }
+    const extError = await upsertExtension(row.id, String(base.kind ?? 'service'), ext);
+    if (!extError) await linkCategory(row.id, String(base.kind ?? 'service'));
+    if (extError) {
+      redirect(`/admin/${entityKey}/new?error=${encodeURIComponent(extError)}`);
+    }
+    revalidatePath(`/admin/${entityKey}`);
+    redirect(`/admin/${entityKey}?created=1`);
+  }
 
   const { error } = await getAdminClient().from(entity.table).insert(payload);
   revalidatePath(`/admin/${entityKey}`);
@@ -29,6 +178,22 @@ export async function updateRow(entityKey: string, id: string, form: FormData): 
   if (!entity) throw new Error('Unknown entity');
 
   const payload = formToPayload(entity, form, true);
+
+  if (entityKey === 'businesses') {
+    const { base, ext } = splitPayload(payload);
+    const { error } = await getAdminClient().from('businesses').update(base).eq('id', id);
+    if (error) {
+      redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(error.message)}`);
+    }
+    const extError = await upsertExtension(id, String(base.kind ?? 'service'), ext);
+    if (extError) {
+      redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(extError)}`);
+    }
+    revalidatePath(`/admin/${entityKey}`);
+    revalidatePath(`/${entityKey}/${id}`);
+    redirect(`/admin/${entityKey}?updated=1`);
+  }
+
   const { error } = await getAdminClient()
     .from(entity.table)
     .update(payload)
