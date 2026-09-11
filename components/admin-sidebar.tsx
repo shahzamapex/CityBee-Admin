@@ -31,10 +31,19 @@ const STORAGE_KEY = 'cb_admin_sidebar_open';
  * line, soft-wash active states, pinned footer — all in CityBee colors.
  * The whole rail collapses to zero width; the header keeps the toggle.
  */
-export default function AdminSidebar({ pendingSubmissions }: { pendingSubmissions: number }) {
+export default function AdminSidebar() {
   const pathname = usePathname();
   const groups = getSidebarGroups();
   const [open, setOpen] = useState(true);
+  const [pendingSubmissions, setPending] = useState(0);
+
+  // Badge comes from the header's background fetch, not a server query
+  // in the layout — keeps navigation instant.
+  useEffect(() => {
+    const on = (e: Event) => setPending((e as CustomEvent<number>).detail ?? 0);
+    window.addEventListener('cb-pending-count', on);
+    return () => window.removeEventListener('cb-pending-count', on);
+  }, []);
 
   // Rail collapse (driven by the header toggle, persisted in localStorage).
   useEffect(() => {

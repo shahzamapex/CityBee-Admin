@@ -171,9 +171,9 @@ function PhoneInput({
             type="tel"
             readOnly
             placeholder="Same as phone"
-            className={`${inputCls} flex-1 min-w-0 cursor-not-allowed rounded-r-none`}
+            className="min-w-0 flex-1 cursor-not-allowed rounded-l-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15"
           />
-          <span className="flex items-center rounded-r-lg border border-l-0 border-border-strong bg-subtle px-3 text-sm text-ink-muted">
+          <span className="flex shrink-0 items-center rounded-r-lg border border-l-0 border-border-strong bg-subtle px-3 text-sm text-ink-muted">
             ✓
           </span>
         </div>
@@ -197,7 +197,7 @@ function PhoneInput({
           name={`${field.name}_cc`}
           defaultValue={cc}
           aria-label="Country code"
-          className={`${inputCls} w-[104px] shrink-0 rounded-r-none border-r-0`}
+          className="w-[104px] shrink-0 rounded-l-lg border border-r-0 border-border-strong bg-white px-2 py-2.5 font-body text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
         >
           {COUNTRY_CODES.map((c) => (
             <option key={c.code} value={c.code}>
@@ -215,7 +215,7 @@ function PhoneInput({
           defaultValue={digits}
           required={field.required}
           placeholder="98765 43210"
-          className={`${inputCls} flex-1 min-w-0 rounded-l-none`}
+          className="min-w-0 flex-1 rounded-r-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15"
         />
       </div>
       {sameAs && (

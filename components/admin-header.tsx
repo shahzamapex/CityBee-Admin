@@ -13,10 +13,33 @@ const STORAGE_KEY = 'cb_admin_sidebar_open';
  * toggle, breadcrumb (workspace / active page), quick search, submissions
  * bell and the Add Business action.
  */
-export default function AdminHeader({ pendingSubmissions }: { pendingSubmissions: number }) {
+export default function AdminHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(true);
+  const [pendingSubmissions, setPending] = useState(0);
+
+  // Pending badge arrives after first paint — navigation never waits on it.
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/pending-count');
+        const body = (await res.json()) as { count?: number };
+        if (!alive) return;
+        setPending(body.count ?? 0);
+        window.dispatchEvent(new CustomEvent('cb-pending-count', { detail: body.count ?? 0 }));
+      } catch {
+        // badge is decorative
+      }
+    };
+    void load();
+    const interval = setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     setOpen(localStorage.getItem(STORAGE_KEY) !== '0');
