@@ -94,7 +94,9 @@ export default function AdminHeader() {
       notification: '/admin/notifications',
     };
     const match = Object.keys(routes).find((key) => q.startsWith(key));
-    router.push(match ? routes[match] : '/admin/businesses');
+    const base = match ? routes[match] : '/admin/businesses';
+    router.push(q ? `${base}?q=${encodeURIComponent(q)}` : base);
+    (e.currentTarget as HTMLFormElement).reset();
   }
 
   return (
