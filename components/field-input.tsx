@@ -163,7 +163,7 @@ function PhoneInput({
   if (sameAs && same) {
     return (
       <div>
-        <div className="flex opacity-60">
+        <div className="flex overflow-hidden opacity-60">
           <input type="hidden" name={`${field.name}_cc`} value={cc} />
           <input
             id={field.name}
@@ -171,7 +171,7 @@ function PhoneInput({
             type="tel"
             readOnly
             placeholder="Same as phone"
-            className={`${inputCls} cursor-not-allowed rounded-r-none`}
+            className={`${inputCls} flex-1 min-w-0 cursor-not-allowed rounded-r-none`}
           />
           <span className="flex items-center rounded-r-lg border border-l-0 border-border-strong bg-subtle px-3 text-sm text-ink-muted">
             ✓
@@ -192,7 +192,7 @@ function PhoneInput({
 
   return (
     <div>
-      <div className="flex">
+      <div className="flex overflow-hidden">
         <select
           name={`${field.name}_cc`}
           defaultValue={cc}
@@ -215,7 +215,7 @@ function PhoneInput({
           defaultValue={digits}
           required={field.required}
           placeholder="98765 43210"
-          className={`${inputCls} rounded-l-none`}
+          className={`${inputCls} flex-1 min-w-0 rounded-l-none`}
         />
       </div>
       {sameAs && (

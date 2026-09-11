@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEntity } from '@/lib/entities';
-import { getRow, getSelectOptions } from '@/lib/data';
-import { getAdminClient } from '@/lib/supabase';
+import { getRow, getSelectOptions, mergeKindExtension } from '@/lib/data';
 import { updateRow } from '../../actions';
 import FormWizard from '@/components/form-wizard';
 
@@ -25,42 +24,7 @@ export default async function EditEntityPage({
 
   // Businesses: merge the kind extension row so the form shows saved
   // doctor/restaurant/hotel details.
-  if (entityKey === 'businesses') {
-    const client = getAdminClient();
-    const kind = typeof row.kind === 'string' ? row.kind : '';
-    if (kind === 'doctor') {
-      const { data: d } = await client.from('doctors').select('*').eq('business_id', id).maybeSingle();
-      if (d) {
-        row.doctorName = d.name;
-        row.specialization = d.specialization;
-        row.qualification = d.qualification;
-        row.experienceYears = d.experience_years;
-        row.consultationFee = d.consultation_fee;
-      }
-    } else if (kind === 'restaurant') {
-      const { data: r } = await client.from('restaurants').select('*').eq('business_id', id).maybeSingle();
-      if (r) {
-        row.cuisine = r.cuisine;
-        row.priceRange = r.price_range;
-        row.vegType = r.veg_type;
-      }
-    } else if (kind === 'hotel') {
-      const { data: h } = await client
-        .from('hotels')
-        .select('*, hotel_amenities(amenity)')
-        .eq('business_id', id)
-        .maybeSingle();
-      if (h) {
-        row.hotelType = h.hotel_type;
-        row.priceRange = h.price_range;
-        row.checkInTime = h.check_in;
-        row.checkOutTime = h.check_out;
-        row.amenities = Array.isArray(h.hotel_amenities)
-          ? (h.hotel_amenities as { amenity: string }[]).map((a) => a.amenity).join(', ')
-          : '';
-      }
-    }
-  }
+  if (entityKey === 'businesses') await mergeKindExtension(row);
 
   const uuidOptions: Record<string, { value: string; label: string }[]> = {};
   for (const field of entity.fields) {

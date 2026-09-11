@@ -125,3 +125,49 @@ export async function getSelectOptions(field: Field): Promise<{ value: string; l
     label: String(item[lookup.label] ?? 'Unnamed'),
   }));
 }
+
+/**
+ * Businesses: merges the kind extension row (doctors/restaurants/hotels +
+ * amenities) into the base row so detail/edit views show saved kind
+ * details. Mutates and returns the same row object.
+ */
+export async function mergeKindExtension(
+  row: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const kind = typeof row.kind === 'string' ? row.kind : '';
+  const id = String(row.id ?? '');
+  const client = getAdminClient();
+  if (kind === 'doctor') {
+    const { data } = await client.from('doctors').select('*').eq('business_id', id).maybeSingle();
+    if (data) {
+      row.doctorName = data.name;
+      row.specialization = data.specialization;
+      row.qualification = data.qualification;
+      row.experienceYears = data.experience_years;
+      row.consultationFee = data.consultation_fee;
+    }
+  } else if (kind === 'restaurant') {
+    const { data } = await client.from('restaurants').select('*').eq('business_id', id).maybeSingle();
+    if (data) {
+      row.cuisine = data.cuisine;
+      row.priceRange = data.price_range;
+      row.vegType = data.veg_type;
+    }
+  } else if (kind === 'hotel') {
+    const { data } = await client
+      .from('hotels')
+      .select('*, hotel_amenities(amenity)')
+      .eq('business_id', id)
+      .maybeSingle();
+    if (data) {
+      row.hotelType = data.hotel_type;
+      row.priceRange = data.price_range;
+      row.checkInTime = data.check_in;
+      row.checkOutTime = data.check_out;
+      row.amenities = Array.isArray(data.hotel_amenities)
+        ? (data.hotel_amenities as { amenity: string }[]).map((a) => a.amenity).join(', ')
+        : '';
+    }
+  }
+  return row;
+}
