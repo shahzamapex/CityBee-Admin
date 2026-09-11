@@ -17,7 +17,8 @@ export type FieldType =
   | 'time'
   | 'phone'
   | 'address'
-  | 'category';
+  | 'category'
+  | 'location';
 
 export interface FieldLookup {
   field: string;
@@ -46,6 +47,8 @@ export interface Field {
   max?: number;
   /** Phone-family field that can mirror another phone field's value. */
   sameAs?: string;
+  /** Render in detail views but not in the create/edit form (wizard). */
+  inForm?: boolean;
 }
 
 export interface Entity {
@@ -123,9 +126,10 @@ export const entities: Entity[] = [
       { name: 'whatsapp', label: 'WhatsApp', type: 'phone', sameAs: 'phone' },
       { name: 'email', label: 'Email', type: 'email', required: true },
       { name: 'website', label: 'Website', type: 'url' },
-      { name: 'address', label: 'Address (Google Maps)', type: 'address', required: true, help: 'Search and pick the exact business location' },
-      { name: 'locality', label: 'Locality / Area', type: 'text', inList: true },
-      { name: 'city_id', label: 'City', type: 'uuid', lookups: [{ field: 'city_id', table: 'cities', label: 'name' }] },
+      { name: 'location', label: 'Location', type: 'location', required: true, help: 'Pick the city, optionally pin the exact spot on the map' },
+      { name: 'address', label: 'Address', type: 'text', inForm: false },
+      { name: 'locality', label: 'Locality / Area', type: 'text', inList: true, inForm: false },
+      { name: 'city_id', label: 'City', type: 'uuid', inForm: false, lookups: [{ field: 'city_id', table: 'cities', label: 'name' }] },
       { name: 'rating', label: 'Rating', type: 'number', min: 0, max: 5, inList: true },
       { name: 'review_count', label: 'Review Count', type: 'number', min: 0 },
       { name: 'opening_hours', label: 'Opening Hours', type: 'text' },
@@ -174,7 +178,7 @@ export const entities: Entity[] = [
     steps: [
       { title: 'Basics', fields: ['name', 'category', 'slug', 'tagline'] },
       { title: 'Contact', fields: ['phone', 'whatsapp', 'email', 'website'] },
-      { title: 'Location', fields: ['address', 'locality', 'city_id'] },
+      { title: 'Location', fields: ['location', 'address', 'locality', 'city_id'] },
       { title: 'Details', fields: ['description', 'opening_hours', 'rating', 'review_count', 'status'] },
       { title: 'Flags', fields: ['is_pure_veg', 'is_verified', 'is_featured'] },
       { title: 'Kind Details', fields: [] }, // kind-specific fields auto-fill here

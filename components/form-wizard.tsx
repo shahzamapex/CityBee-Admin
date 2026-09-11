@@ -85,6 +85,11 @@ export default function FormWizard({
     if (!form) return;
     const fields = steps[current]?.fields ?? [];
     const invalid = fields.some((field) => {
+      // Virtual location field → validate the picker's required city input.
+      if (field.type === 'location') {
+        const cityEl = form.elements.namedItem('city_display') as HTMLInputElement | null;
+        return !!cityEl && !cityEl.checkValidity();
+      }
       const el = form.elements.namedItem(field.name) as
         | (HTMLInputElement & { checkValidity: () => boolean })
         | null;
@@ -183,7 +188,9 @@ export default function FormWizard({
                 {step.title}
               </h2>
             )}
-            {step.fields.map((field) => (
+            {step.fields
+              .filter((field) => field.inForm !== false)
+              .map((field) => (
               <FieldInput
                 key={field.name}
                 field={field}
@@ -191,6 +198,8 @@ export default function FormWizard({
                 options={uuidOptions[field.name] ?? field.options}
                 lat={row?.latitude}
                 lng={row?.longitude}
+                city={row?.city_name}
+                locality={row?.locality}
                 hidden={
                   field.kindOnly && (!kind || !field.kindOnly.includes(kind))
                     ? true

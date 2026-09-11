@@ -81,7 +81,11 @@ export default async function ViewEntityPage({
       {/* ── Sectioned field groups (wizard's step config) ───────── */}
       <div className="space-y-4">
         {sections.map((section) => {
-          const visible = section.fields.filter((f) => !f.kindOnly?.length || (kind && f.kindOnly.includes(kind)));
+          const visible = section.fields.filter(
+            (f) =>
+              f.type !== 'location' &&
+              (!f.kindOnly?.length || (kind && f.kindOnly.includes(kind))),
+          );
           if (visible.length === 0) return null;
           return (
             <section

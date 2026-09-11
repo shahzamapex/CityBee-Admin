@@ -173,6 +173,22 @@ export async function mergeKindExtension(
     }
   }
 
+  // City name + coords for the LocationPicker's initial state.
+  if (row.city_id) {
+    const { data: cityRow } = await client
+      .from('cities')
+      .select('name, latitude, longitude')
+      .eq('id', String(row.city_id))
+      .maybeSingle();
+    if (cityRow) {
+      row.city_name = (cityRow as { name: string }).name;
+      if ((cityRow as { latitude?: number }).latitude != null) {
+        row.city_lat = (cityRow as { latitude: number }).latitude;
+        row.city_lng = (cityRow as { longitude: number }).longitude;
+      }
+    }
+  }
+
   if (kind === 'doctor') {
     const { data } = await client.from('doctors').select('*').eq('business_id', id).maybeSingle();
     if (data) {

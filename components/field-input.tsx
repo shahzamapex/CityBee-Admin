@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Field } from '@/lib/entities';
 import AddressInput from '@/components/address-input';
+import LocationPicker from '@/components/location-picker';
 
 const COUNTRY_CODES = [
   { code: '+91', label: '🇮🇳 +91' },
@@ -31,6 +32,8 @@ export default function FieldInput({
   hidden,
   lat,
   lng,
+  city,
+  locality,
 }: {
   field: Field;
   value: unknown;
@@ -38,6 +41,8 @@ export default function FieldInput({
   hidden?: boolean;
   lat?: unknown;
   lng?: unknown;
+  city?: unknown;
+  locality?: unknown;
 }) {
   const inputCls =
     'w-full rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15';
@@ -51,7 +56,16 @@ export default function FieldInput({
         {field.required && <span className="ml-0.5 text-brand">*</span>}
       </label>
 
-      {field.type === 'phone' ? (
+      {field.type === 'location' ? (
+        <LocationPicker
+          initialCity={typeof city === 'string' ? city : undefined}
+          initialAddress={typeof value === 'string' ? value : undefined}
+          initialLocality={typeof locality === 'string' ? locality : undefined}
+          initialLat={typeof lat === 'number' ? lat : null}
+          initialLng={typeof lng === 'number' ? lng : null}
+          inputCls={inputCls}
+        />
+      ) : field.type === 'phone' ? (
         <PhoneInput field={field} strValue={strValue} inputCls={inputCls} />
       ) : field.type === 'address' ? (
         <AddressInput

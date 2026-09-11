@@ -43,6 +43,37 @@ function splitPayload(payload: Record<string, unknown>): {
   return { base, ext };
 }
 
+/** City fields from the LocationPicker → cities upsert → businesses.city_id. */
+async function applyCity(
+  base: Record<string, unknown>,
+  form: FormData,
+): Promise<void> {
+  const name = String(form.get('city_name') ?? '').trim();
+  if (!name) return;
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  const lat = Number(form.get('city_lat'));
+  const lng = Number(form.get('city_lng'));
+  const values: Record<string, unknown> = {
+    slug,
+    name,
+    state_region: String(form.get('city_state') ?? '').trim() || null,
+    country: String(form.get('city_country') ?? '').trim() || null,
+    country_code: String(form.get('city_country_code') ?? '').trim() || null,
+    latitude: Number.isFinite(lat) && lat !== 0 ? lat : null,
+    longitude: Number.isFinite(lng) && lng !== 0 ? lng : null,
+    google_place_id: String(form.get('city_place_id') ?? '').trim() || null,
+  };
+  const { data: city, error } = await getAdminClient()
+    .from('cities')
+    .upsert(values, { onConflict: 'slug' })
+    .select('id')
+    .single();
+  if (!error && city) base.city_id = city.id;
+}
+
 /** Category select ("slug|defaultKind") → kind + geo + place id columns. */
 function applyCategory(
   base: Record<string, unknown>,
@@ -170,6 +201,7 @@ export async function createRow(entityKey: string, form: FormData): Promise<void
     const { base, ext } = splitPayload(payload);
     mergePhones(base, form);
     const categorySlug = applyCategory(base, form);
+    await applyCity(base, form);
     const { data: row, error } = await getAdminClient()
       .from('businesses')
       .insert(base)
@@ -208,6 +240,7 @@ export async function updateRow(entityKey: string, id: string, form: FormData): 
     const { base, ext } = splitPayload(payload);
     mergePhones(base, form);
     const categorySlug = applyCategory(base, form);
+    await applyCity(base, form);
     const { error } = await getAdminClient().from('businesses').update(base).eq('id', id);
     if (error) {
       redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(error.message)}`);
