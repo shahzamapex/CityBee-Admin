@@ -5,7 +5,6 @@ import { getRow, getSelectOptions } from '@/lib/data';
 import { getAdminClient } from '@/lib/supabase';
 import { updateRow } from '../../actions';
 import FormWizard from '@/components/form-wizard';
-import KindFields from '@/components/kind-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,7 +105,6 @@ export default async function EditEntityPage({
       >
         <FormWizard entity={entity} row={row} uuidOptions={uuidOptions} submitLabel="Save Changes"
           cancelHref={`/admin/${entity.key}/${id}`} />
-        <KindFields />
       </form>
     </div>
   );

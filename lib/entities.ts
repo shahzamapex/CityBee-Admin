@@ -12,7 +12,10 @@ export type FieldType =
   | 'select'
   | 'date'
   | 'url'
-  | 'uuid';
+  | 'uuid'
+  | 'email'
+  | 'time'
+  | 'phone';
 
 export interface FieldLookup {
   field: string;
@@ -36,6 +39,11 @@ export interface Field {
   lookups?: FieldLookup[];
   /** Only render when the business `kind` select matches one of these. */
   kindOnly?: string[];
+  /** Numeric bounds (rating 0-5 etc.). */
+  min?: number;
+  max?: number;
+  /** Phone-family field that can mirror another phone field's value. */
+  sameAs?: string;
 }
 
 export interface Entity {
@@ -117,15 +125,15 @@ export const entities: Entity[] = [
       ]},
       { name: 'tagline', label: 'Tagline', type: 'text', inList: true },
       { name: 'description', label: 'Description', type: 'textarea' },
-      { name: 'phone', label: 'Phone', type: 'text', inList: true },
-      { name: 'whatsapp', label: 'WhatsApp', type: 'text' },
-      { name: 'email', label: 'Email', type: 'text' },
+      { name: 'phone', label: 'Phone', type: 'phone', inList: true, required: true },
+      { name: 'whatsapp', label: 'WhatsApp', type: 'phone', sameAs: 'phone' },
+      { name: 'email', label: 'Email', type: 'email' },
       { name: 'website', label: 'Website', type: 'url' },
       { name: 'address', label: 'Address', type: 'text' },
       { name: 'locality', label: 'Locality / Area', type: 'text', inList: true },
       { name: 'city_id', label: 'City', type: 'uuid', lookups: [{ field: 'city_id', table: 'cities', label: 'name' }] },
-      { name: 'rating', label: 'Rating', type: 'number', inList: true },
-      { name: 'review_count', label: 'Review Count', type: 'number' },
+      { name: 'rating', label: 'Rating', type: 'number', min: 0, max: 5, inList: true },
+      { name: 'review_count', label: 'Review Count', type: 'number', min: 0 },
       { name: 'opening_hours', label: 'Opening Hours', type: 'text' },
       { name: 'is_pure_veg', label: 'Pure Veg', type: 'boolean' },
       { name: 'is_verified', label: 'Verified', type: 'boolean', inList: true, listPill: true },
@@ -164,8 +172,8 @@ export const entities: Entity[] = [
         { value: 'Homestay', label: 'Homestay' },
         { value: 'Resort', label: 'Resort' },
       ]},
-      { name: 'checkInTime', label: 'Check-in Time', type: 'text', kindOnly: ['hotel'], placeholder: '12:00 PM' },
-      { name: 'checkOutTime', label: 'Check-out Time', type: 'text', kindOnly: ['hotel'], placeholder: '11:00 AM' },
+      { name: 'checkInTime', label: 'Check-in Time', type: 'time', kindOnly: ['hotel'] },
+      { name: 'checkOutTime', label: 'Check-out Time', type: 'time', kindOnly: ['hotel'] },
       { name: 'amenities', label: 'Amenities (comma separated)', type: 'text', kindOnly: ['hotel'], placeholder: 'Wi-Fi, Parking, Room Service' },
     ],
     lookups: [{ field: 'city_id', table: 'cities', label: 'name' }],
@@ -238,8 +246,8 @@ export const entities: Entity[] = [
       { name: 'address', label: 'Address', type: 'text', inList: true },
       { name: 'timings', label: 'Timings', type: 'text' },
       { name: 'entry_fee', label: 'Entry Fee', type: 'text' },
-      { name: 'rating', label: 'Rating', type: 'number', inList: true },
-      { name: 'review_count', label: 'Review Count', type: 'number' },
+      { name: 'rating', label: 'Rating', type: 'number', min: 0, max: 5, inList: true },
+      { name: 'review_count', label: 'Review Count', type: 'number', min: 0 },
       { name: 'is_featured', label: 'Featured', type: 'boolean', inList: true, listPill: true },
       { name: 'is_active', label: 'Active', type: 'boolean', inList: true, listPill: true },
     ],

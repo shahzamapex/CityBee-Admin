@@ -4,7 +4,6 @@ import { getEntity } from '@/lib/entities';
 import { getSelectOptions } from '@/lib/data';
 import { createRow } from '../actions';
 import FormWizard from '@/components/form-wizard';
-import KindFields from '@/components/kind-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +59,6 @@ export default async function NewEntityPage({
       >
         <FormWizard entity={entity} uuidOptions={uuidOptions} submitLabel={`Create ${entity.singular}`}
           cancelHref={`/admin/${entity.key}`} />
-        <KindFields />
       </form>
     </div>
   );

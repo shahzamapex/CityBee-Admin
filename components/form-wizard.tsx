@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Entity, Field } from '@/lib/entities';
 import FieldInput from '@/components/field-input';
 
 /**
- * Multi-step create/edit form: each step shows a handful of fields so
- * everything fits the viewport without scrolling. Progress bar + step
- * chips at the top, Back/Next at the bottom. Non-active steps stay in
- * the DOM (hidden) so every value submits — required-field validation
- * runs per step on Next, and once more on submit for hidden steps.
+ * Multi-step create/edit form.
+ *
+ * - Kind-aware: the "Kind Details" step appears only when the selected
+ *   kind has kind-specific fields (doctor/restaurant/hotel), so a salon
+ *   never sees an empty step.
+ * - Enter inside inputs moves to the next step instead of submitting —
+ *   the submit button only exists on the last step.
+ * - Per-step validation on Next; hidden steps stay mounted so all values
+ *   submit. Compact 2-column grid keeps every step viewport-friendly.
  */
 export default function FormWizard({
   entity,
@@ -25,35 +29,60 @@ export default function FormWizard({
   submitLabel: string;
   cancelHref?: string;
 }) {
-  const steps = entity.steps
-    ? entity.steps.map((step) => ({
-        title: step.title,
-        fields: step.fields.length
-          ? step.fields
-              .map((name) => entity.fields.find((f) => f.name === name))
-              .filter((f): f is Field => !!f)
-          : entity.fields.filter((f) => f.kindOnly?.length),
-      }))
-    : chunkSteps(entity);
+  const [kind, setKind] = useState<string>(
+    typeof row?.kind === 'string' ? row.kind : '',
+  );
+  const [current, setCurrent] = useState(0);
+
+  // Watch the kind select inside this form.
+  useEffect(() => {
+    const form = document.querySelector<HTMLFormElement>('form[data-entity-form]');
+    const sel = form?.elements.namedItem('kind') as HTMLSelectElement | null;
+    if (!sel) return;
+    const on = () => setKind(sel.value);
+    sel.addEventListener('change', on);
+    return () => sel.removeEventListener('change', on);
+  }, []);
+
+  // Kind-specific fields visible for the current kind.
+  const kindFields = entity.fields.filter(
+    (f) => f.kindOnly?.length && kind && f.kindOnly.includes(kind),
+  );
+
+  // Steps: entity config, with the kind step dropped when it has no fields.
+  const steps: { title: string; fields: Field[]; kindStep?: boolean }[] = (
+    entity.steps
+      ? entity.steps.map((step) => ({
+          title: step.title,
+          kindStep: step.fields.length === 0,
+          fields: step.fields.length
+            ? step.fields
+                .map((name) => entity.fields.find((f) => f.name === name))
+                .filter((f): f is Field => !!f)
+            : entity.fields.filter((f) => f.kindOnly?.length),
+        }))
+      : chunkSteps(entity)
+  ).filter((step) => (step.kindStep ? kindFields.length > 0 : true));
 
   const total = steps.length;
-  const [current, setCurrent] = useState(0);
-  const rowKind = typeof row?.kind === 'string' ? row.kind : null;
   const isLast = current === total - 1;
+
+  useEffect(() => {
+    // Clamp when the kind step disappears while standing on it.
+    setCurrent((c) => Math.min(c, total - 1));
+  }, [total]);
 
   function next() {
     const form = document.querySelector<HTMLFormElement>('form[data-entity-form]');
     if (!form) return;
-    // Validate only the visible step's fields (hidden ones skip via noValidate).
-    const fields = steps[current].fields;
+    const fields = steps[current]?.fields ?? [];
     const invalid = fields.some((field) => {
       const el = form.elements.namedItem(field.name) as
         | (HTMLInputElement & { checkValidity: () => boolean })
         | null;
       if (!el || typeof el.checkValidity !== 'function') return false;
-      // Skip kindOnly fields hidden for the current kind.
-      const wrapper = form.querySelector(`[data-kind-only] input#${field.name}, [data-kind-only] select#${field.name}`)?.closest('[data-kind-only]');
-      if (wrapper instanceof HTMLElement && wrapper.hidden) return false;
+      // Skip kindOnly fields not visible for the current kind.
+      if (field.kindOnly?.length && (!kind || !field.kindOnly.includes(kind))) return false;
       return !el.checkValidity();
     });
     if (invalid) {
@@ -62,6 +91,22 @@ export default function FormWizard({
     }
     setCurrent((c) => Math.min(c + 1, total - 1));
   }
+
+  // Enter → next step (never submit) outside textareas/buttons.
+  useEffect(() => {
+    const form = document.querySelector<HTMLFormElement>('form[data-entity-form]');
+    if (!form) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      const t = e.target as HTMLElement;
+      if (t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON' || t.isContentEditable) return;
+      e.preventDefault();
+      if (current < total - 1) next();
+    };
+    form.addEventListener('keydown', onKey);
+    return () => form.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, total, kind]);
 
   return (
     <div>
@@ -104,31 +149,36 @@ export default function FormWizard({
       )}
 
       {/* ── Steps — hidden ones stay mounted for submit ─────────── */}
-      {steps.map((step, i) => (
-        <div key={step.title} hidden={i !== current || undefined} className="space-y-5">
-          {total > 1 && (
-            <h2 className="font-headline text-base font-semibold text-ink">{step.title}</h2>
-          )}
-          {step.fields.map((field) => (
-            <FieldInput
-              key={field.name}
-              field={field}
-              value={row?.[field.name]}
-              options={uuidOptions[field.name] ?? field.options}
-              hidden={
-                field.kindOnly && (!rowKind || !field.kindOnly.includes(rowKind))
-                  ? true
-                  : undefined
-              }
-            />
-          ))}
-          {step.fields.length === 0 && (
-            <p className="rounded-lg bg-subtle px-4 py-3 font-body text-sm text-ink-muted">
-              Pick a kind first — its details appear here.
-            </p>
-          )}
-        </div>
-      ))}
+      {steps.map((step, i) => {
+        const wideFields = new Set(['description', 'address', 'amenities']);
+        const anyWide = step.fields.some((f) => f.type === 'textarea' || wideFields.has(f.name));
+        return (
+          <div
+            key={step.title}
+            hidden={i !== current || undefined}
+            className={anyWide ? 'space-y-5' : 'grid gap-4 sm:grid-cols-2'}
+          >
+            {total > 1 && i === current && (
+              <h2 className="col-span-full font-headline text-base font-semibold text-ink">
+                {step.title}
+              </h2>
+            )}
+            {step.fields.map((field) => (
+              <FieldInput
+                key={field.name}
+                field={field}
+                value={row?.[field.name]}
+                options={uuidOptions[field.name] ?? field.options}
+                hidden={
+                  field.kindOnly && (!kind || !field.kindOnly.includes(kind))
+                    ? true
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        );
+      })}
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <div className="mt-6 flex items-center justify-between border-t border-stone-100 pt-5">
@@ -171,16 +221,16 @@ export default function FormWizard({
   );
 }
 
-function chunkSteps(entity: Entity): { title: string; fields: Field[] }[] {
+function chunkSteps(entity: Entity): { title: string; fields: Field[]; kindStep?: boolean }[] {
   const kindFields = entity.fields.filter((f) => f.kindOnly?.length);
   const plain = entity.fields.filter((f) => !f.kindOnly?.length);
-  const steps: { title: string; fields: Field[] }[] = [];
-  for (let i = 0; i < plain.length; i += 7) {
+  const steps: { title: string; fields: Field[]; kindStep?: boolean }[] = [];
+  for (let i = 0; i < plain.length; i += 6) {
     steps.push({
       title: steps.length === 0 ? 'Details' : 'More Details',
-      fields: plain.slice(i, i + 7),
+      fields: plain.slice(i, i + 6),
     });
   }
-  if (kindFields.length) steps.push({ title: 'Kind Details', fields: kindFields });
+  if (kindFields.length) steps.push({ title: 'Kind Details', fields: kindFields, kindStep: true });
   return steps;
 }

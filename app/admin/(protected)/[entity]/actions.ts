@@ -52,6 +52,17 @@ function splitPayload(payload: Record<string, unknown>): {
   return { base, ext };
 }
 
+/** Combines the country-code select + digits input into "+CCdddd" values. */
+function mergePhones(base: Record<string, unknown>, form: FormData): void {
+  for (const name of ['phone', 'whatsapp']) {
+    const raw = form.get(name);
+    if (raw === null) continue; // field not in this form
+    const digits = String(raw).replace(/\D/g, '');
+    const cc = String(form.get(`${name}_cc`) ?? '+91');
+    base[name] = digits ? `${cc}${digits}` : null;
+  }
+}
+
 /** Writes the kind extension row(s) (doctors/restaurants/hotels + amenities). */
 async function upsertExtension(
   businessId: string,
@@ -147,6 +158,7 @@ export async function createRow(entityKey: string, form: FormData): Promise<void
 
   if (entityKey === 'businesses') {
     const { base, ext } = splitPayload(payload);
+    mergePhones(base, form);
     const { data: row, error } = await getAdminClient()
       .from('businesses')
       .insert(base)
@@ -181,6 +193,7 @@ export async function updateRow(entityKey: string, id: string, form: FormData): 
 
   if (entityKey === 'businesses') {
     const { base, ext } = splitPayload(payload);
+    mergePhones(base, form);
     const { error } = await getAdminClient().from('businesses').update(base).eq('id', id);
     if (error) {
       redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(error.message)}`);
