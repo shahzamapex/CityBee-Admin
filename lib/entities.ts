@@ -50,6 +50,8 @@ export interface Entity {
   defaultOrder: { column: string; ascending: boolean };
   /** Optional join to show a parent label in the list (e.g. business name). */
   lookups?: FieldLookup[];
+  /** Named field groups for the multi-step create/edit wizard. */
+  steps?: { title: string; fields: string[] }[];
   icon: string;
 }
 
@@ -167,6 +169,14 @@ export const entities: Entity[] = [
       { name: 'amenities', label: 'Amenities (comma separated)', type: 'text', kindOnly: ['hotel'], placeholder: 'Wi-Fi, Parking, Room Service' },
     ],
     lookups: [{ field: 'city_id', table: 'cities', label: 'name' }],
+    steps: [
+      { title: 'Basics', fields: ['name', 'kind', 'slug', 'tagline'] },
+      { title: 'Contact', fields: ['phone', 'whatsapp', 'email', 'website'] },
+      { title: 'Location', fields: ['address', 'locality', 'city_id'] },
+      { title: 'Details', fields: ['description', 'opening_hours', 'rating', 'review_count', 'status'] },
+      { title: 'Flags', fields: ['is_pure_veg', 'is_verified', 'is_featured'] },
+      { title: 'Kind Details', fields: [] }, // kind-specific fields auto-fill here
+    ],
   },
   {
     key: 'offers',
@@ -204,6 +214,11 @@ export const entities: Entity[] = [
       ]},
     ],
     lookups: [{ field: 'business_id', table: 'businesses', label: 'name' }],
+    steps: [
+      { title: 'Offer', fields: ['title', 'business_id', 'badge_text', 'subtitle'] },
+      { title: 'Discount', fields: ['discount_type', 'discount_value', 'category_tag', 'description'] },
+      { title: 'Validity & Status', fields: ['valid_from', 'valid_until', 'is_featured', 'status'] },
+    ],
   },
   {
     key: 'places',
@@ -389,6 +404,41 @@ export const entities: Entity[] = [
 
 export function getEntity(key: string): Entity | undefined {
   return entities.find((e) => e.key === key);
+}
+
+export interface FormStep {
+  title: string;
+  fields: Field[];
+}
+
+/**
+ * Wizard steps for an entity:
+ *  1. explicit `steps` config wins (kindOnly fields fill an empty titled step);
+ *  2. otherwise: kindOnly fields get their own step, the rest chunk by 7;
+ *  3. one step total → the caller renders a plain single-page form.
+ */
+export function getFormSteps(entity: Entity): FormStep[] {
+  const kindFields = entity.fields.filter((f) => f.kindOnly?.length);
+  const plain = entity.fields.filter((f) => !f.kindOnly?.length);
+
+  if (entity.steps?.length) {
+    return entity.steps.map((step) => ({
+      title: step.title,
+      fields: step.fields
+        .length
+        ? step.fields
+            .map((name) => entity.fields.find((f) => f.name === name))
+            .filter((f): f is Field => !!f)
+        : kindFields,
+    }));
+  }
+
+  const steps: FormStep[] = [];
+  for (let i = 0; i < plain.length; i += 7) {
+    steps.push({ title: steps.length === 0 ? 'Details' : 'More Details', fields: plain.slice(i, i + 7) });
+  }
+  if (kindFields.length) steps.push({ title: 'Kind Details', fields: kindFields });
+  return steps;
 }
 
 export const statCards = [

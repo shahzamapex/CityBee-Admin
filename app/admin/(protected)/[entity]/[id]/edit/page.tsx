@@ -4,7 +4,7 @@ import { getEntity } from '@/lib/entities';
 import { getRow, getSelectOptions } from '@/lib/data';
 import { getAdminClient } from '@/lib/supabase';
 import { updateRow } from '../../actions';
-import EntityForm from '@/components/entity-form';
+import FormWizard from '@/components/form-wizard';
 import KindFields from '@/components/kind-fields';
 
 export const dynamic = 'force-dynamic';
@@ -104,7 +104,7 @@ export default async function EditEntityPage({
         action={submit}
         className="space-y-6 rounded-xl border border-border-subtle bg-white p-6 shadow-sm"
       >
-        <EntityForm entity={entity} row={row} uuidOptions={uuidOptions} />
+        <FormWizard entity={entity} row={row} uuidOptions={uuidOptions} submitLabel="Save Changes" />
         <KindFields />
         <div className="flex justify-end gap-3 border-t border-stone-100 pt-5">
           <Link

@@ -5,6 +5,7 @@ import { getEntity, type Field } from '@/lib/entities';
 import { deleteRow } from './actions';
 import DeleteButton from '@/components/delete-button';
 import SubmissionActions from '@/components/submission-actions';
+import PageHeader from '@/components/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,19 +40,19 @@ export default async function EntityListPage({ params, searchParams }: PageProps
   return (
     <div className="mx-auto max-w-[1600px]">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3 py-4">
-        <div>
-          <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">{entity.title}</h1>
-          <p className="mt-0.5 font-body text-sm text-ink-soft">{entity.description}</p>
-        </div>
-        <Link
-          href={`/admin/${entity.key}/new`}
-          className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          New {entity.singular}
-        </Link>
-      </div>
+      <PageHeader
+        title={entity.title}
+        description={entity.description}
+        actions={
+          <Link
+            href={`/admin/${entity.key}/new`}
+            className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            New {entity.singular}
+          </Link>
+        }
+      />
 
       {/* ── Banners ─────────────────────────────────────────── */}
       {query.created && <Banner tone="success">{entity.singular} created.</Banner>}
@@ -126,24 +127,30 @@ export default async function EntityListPage({ params, searchParams }: PageProps
                         />
                       </span>
                     )}
-                    <Link
-                      href={`/admin/${entity.key}/${row.id}`}
-                      className="rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-ink-soft transition hover:bg-subtle hover:text-ink"
-                    >
-                      View
-                    </Link>
-                    <Link
-                      href={`/admin/${entity.key}/${row.id}/edit`}
-                      className="ml-1 rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-brand transition hover:bg-brand-soft/50"
-                    >
-                      Edit
-                    </Link>
-                    <DeleteButton
-                      entityKey={entity.key}
-                      id={String(row.id)}
-                      name={String(row[entity.nameField] ?? 'this row')}
-                      deleteAction={deleteRow}
-                    />
+                    <span className="inline-flex items-center gap-0.5">
+                      <Link
+                        href={`/admin/${entity.key}/${row.id}`}
+                        title="View details"
+                        aria-label="View details"
+                        className="rounded-md p-1.5 text-ink-muted transition hover:bg-subtle hover:text-ink"
+                      >
+                        <span className="material-symbols-outlined text-[17px]">visibility</span>
+                      </Link>
+                      <Link
+                        href={`/admin/${entity.key}/${row.id}/edit`}
+                        title="Edit"
+                        aria-label="Edit"
+                        className="rounded-md p-1.5 text-ink-muted transition hover:bg-brand-soft/60 hover:text-brand"
+                      >
+                        <span className="material-symbols-outlined text-[17px]">edit</span>
+                      </Link>
+                      <DeleteButton
+                        entityKey={entity.key}
+                        id={String(row.id)}
+                        name={String(row[entity.nameField] ?? 'this row')}
+                        deleteAction={deleteRow}
+                      />
+                    </span>
                   </td>
                 </tr>
               ))}

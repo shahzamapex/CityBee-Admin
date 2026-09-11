@@ -1,40 +1,13 @@
-import type { Field, Entity } from '@/lib/entities';
+'use client';
+
+import type { Field } from '@/lib/entities';
 
 /**
- * Server-rendered form for create/edit. Booleans render as checkboxes;
- * uuid fields with lookups render as selects populated with parent rows.
- * Kind-specific fields (kindOnly) carry a data-kind-only attribute and
- * start hidden unless the row's kind matches — the KindFields script
- * toggles them live as the kind select changes.
+ * One form field input (client-safe) — shared by the list-detail forms
+ * and the multi-step wizard. kindOnly fields carry a data attribute and
+ * start hidden unless the row's kind matches.
  */
-export default function EntityForm({
-  entity,
-  row,
-  uuidOptions,
-}: {
-  entity: Entity;
-  row?: Record<string, unknown> | null;
-  uuidOptions: Record<string, { value: string; label: string }[]>;
-}) {
-  const rowKind = typeof row?.kind === 'string' ? row.kind : null;
-  return (
-    <div className="space-y-5">
-      {entity.fields.map((field) => (
-        <FieldInput
-          key={field.name}
-          field={field}
-          value={row?.[field.name]}
-          options={uuidOptions[field.name] ?? field.options}
-          hidden={
-            field.kindOnly && (!rowKind || !field.kindOnly.includes(rowKind))
-          }
-        />
-      ))}
-    </div>
-  );
-}
-
-function FieldInput({
+export default function FieldInput({
   field,
   value,
   options,
@@ -47,14 +20,10 @@ function FieldInput({
 }) {
   const inputCls =
     'w-full rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15';
-  const strValue =
-    value === null || value === undefined ? '' : String(value);
+  const strValue = value === null || value === undefined ? '' : String(value);
 
   return (
-    <div
-      data-kind-only={field.kindOnly?.join(',')}
-      hidden={hidden || undefined}
-    >
+    <div data-kind-only={field.kindOnly?.join(',')} hidden={hidden || undefined}>
       <label htmlFor={field.name} className="mb-1.5 block font-body text-sm font-semibold text-ink">
         {field.label}
         {field.required && <span className="ml-0.5 text-brand">*</span>}
@@ -117,9 +86,7 @@ function FieldInput({
         />
       )}
 
-      {field.help && (
-        <p className="mt-1 font-body text-xs text-ink-muted">{field.help}</p>
-      )}
+      {field.help && <p className="mt-1 font-body text-xs text-ink-muted">{field.help}</p>}
     </div>
   );
 }

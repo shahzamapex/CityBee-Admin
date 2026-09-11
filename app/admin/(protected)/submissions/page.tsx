@@ -1,6 +1,7 @@
 import { getAdminClient } from '@/lib/supabase';
 import Link from 'next/link';
 import BulkReviewTable from '@/components/submissions-bulk-table';
+import PageHeader from '@/components/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,14 +37,10 @@ export default async function SubmissionsPage({
   return (
     <div className="mx-auto max-w-6xl">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">Submissions</h1>
-          <p className="mt-0.5 font-body text-sm text-ink-soft">
-            Customer requests from the app — select multiple and approve in bulk.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Submissions"
+        description="Customer requests from the app — select multiple and approve in bulk."
+      />
 
       {/* ── Banners ─────────────────────────────────────────── */}
       {query.approved && <Banner tone="success">✓ {query.approved}</Banner>}

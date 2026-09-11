@@ -25,15 +25,17 @@ export default function DeleteButton({
     return (
       <button
         onClick={() => setConfirming(true)}
-        className="ml-1 rounded-lg px-2.5 py-1.5 font-body text-xs font-semibold text-rose transition hover:bg-rose/10"
+        title="Delete"
+        aria-label={`Delete ${name}`}
+        className="rounded-md p-1.5 text-ink-muted transition hover:bg-rose/10 hover:text-rose"
       >
-        Delete
+        <span className="material-symbols-outlined text-[17px]">delete</span>
       </button>
     );
   }
 
   return (
-    <span className="ml-1 inline-flex items-center gap-1">
+    <span className="inline-flex items-center gap-1">
       <button
         disabled={pending}
         onClick={() => startTransition(() => deleteAction(entityKey, id))}

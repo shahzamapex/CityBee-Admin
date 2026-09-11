@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getEntity, type Field } from '@/lib/entities';
 import { getRow } from '@/lib/data';
 import { resolveLookups } from '@/lib/data';
+import { deleteRow } from '../actions';
+import DeleteButton from '@/components/delete-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,10 +40,17 @@ export default async function ViewEntityPage({
           <div className="flex gap-2">
             <Link
               href={`/admin/${entity.key}/${id}/edit`}
-              className="rounded-xl bg-[#FF6F00] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#E65100]"
+              className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
             >
+              <span className="material-symbols-outlined text-[17px]">edit</span>
               Edit
             </Link>
+            <DeleteButton
+              entityKey={entity.key}
+              id={id}
+              name={String(row[entity.nameField] ?? 'this row')}
+              deleteAction={deleteRow}
+            />
           </div>
         </div>
       </div>
