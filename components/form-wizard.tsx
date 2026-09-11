@@ -29,17 +29,25 @@ export default function FormWizard({
   submitLabel: string;
   cancelHref?: string;
 }) {
+  // Category select carries "slug|defaultKind" — kind derives from it.
+  const initialCategory = typeof row?.category === 'string' ? row.category : '';
   const [kind, setKind] = useState<string>(
-    typeof row?.kind === 'string' ? row.kind : '',
+    (typeof row?.kind === 'string' && row.kind) ||
+      (initialCategory.includes('|') ? initialCategory.split('|')[1] : ''),
   );
   const [current, setCurrent] = useState(0);
 
-  // Watch the kind select inside this form.
+  // Watch the kind/category selects inside this form.
   useEffect(() => {
     const form = document.querySelector<HTMLFormElement>('form[data-entity-form]');
-    const sel = form?.elements.namedItem('kind') as HTMLSelectElement | null;
+    const sel =
+      (form?.elements.namedItem('category') as HTMLSelectElement | null) ??
+      (form?.elements.namedItem('kind') as HTMLSelectElement | null);
     if (!sel) return;
-    const on = () => setKind(sel.value);
+    const on = () => {
+      const v = sel.value;
+      setKind(v.includes('|') ? v.split('|')[1] : v);
+    };
     sel.addEventListener('change', on);
     return () => sel.removeEventListener('change', on);
   }, []);
@@ -92,7 +100,8 @@ export default function FormWizard({
     setCurrent((c) => Math.min(c + 1, total - 1));
   }
 
-  // Enter → next step (never submit) outside textareas/buttons.
+  // Enter → next step, and block any submit that isn't from the last
+  // step's button (Enter key, autofill, browser quirks — all of it).
   useEffect(() => {
     const form = document.querySelector<HTMLFormElement>('form[data-entity-form]');
     if (!form) return;
@@ -103,8 +112,19 @@ export default function FormWizard({
       e.preventDefault();
       if (current < total - 1) next();
     };
+    const onSubmit = (e: SubmitEvent) => {
+      if (current < total - 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        next();
+      }
+    };
     form.addEventListener('keydown', onKey);
-    return () => form.removeEventListener('keydown', onKey);
+    form.addEventListener('submit', onSubmit);
+    return () => {
+      form.removeEventListener('keydown', onKey);
+      form.removeEventListener('submit', onSubmit);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, total, kind]);
 
@@ -169,6 +189,8 @@ export default function FormWizard({
                 field={field}
                 value={row?.[field.name]}
                 options={uuidOptions[field.name] ?? field.options}
+                lat={row?.latitude}
+                lng={row?.longitude}
                 hidden={
                   field.kindOnly && (!kind || !field.kindOnly.includes(kind))
                     ? true

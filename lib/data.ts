@@ -113,6 +113,16 @@ export async function resolveLookups(
 
 /** Options for uuid-select fields (e.g. pick a business for an offer). */
 export async function getSelectOptions(field: Field): Promise<{ value: string; label: string }[]> {
+  if (field.type === 'category') {
+    const { data } = await getAdminClient()
+      .from('categories')
+      .select('slug, name, default_kind')
+      .eq('is_active', true)
+      .order('sort_order');
+    return ((data ?? []) as unknown as { slug: string; name: string; default_kind?: string }[]).map(
+      (c) => ({ value: `${c.slug}|${c.default_kind ?? 'service'}`, label: c.name }),
+    );
+  }
   if (field.type !== 'uuid' || !field.lookups?.length) return field.options ?? [];
   const lookup = field.lookups[0];
   const { data } = await getAdminClient()
@@ -137,6 +147,32 @@ export async function mergeKindExtension(
   const kind = typeof row.kind === 'string' ? row.kind : '';
   const id = String(row.id ?? '');
   const client = getAdminClient();
+
+  // Category select value ("slug|defaultKind") from the current link.
+  const { data: link } = await client
+    .from('business_categories')
+    .select('categories(slug, default_kind)')
+    .eq('business_id', id)
+    .maybeSingle();
+  const linked = (link as { categories?: { slug: string; default_kind?: string } } | null)?.categories;
+  if (linked) row.category = `${linked.slug}|${linked.default_kind ?? kind ?? 'service'}`;
+
+  // Geography "POINT(lng lat)" (string or GeoJSON) → latitude/longitude.
+  const loc = row.location;
+  if (typeof loc === 'string') {
+    const m = loc.match(/POINT\(([-\d.]+) ([-\d.]+)\)/i);
+    if (m) {
+      row.longitude = Number(m[1]);
+      row.latitude = Number(m[2]);
+    }
+  } else if (loc && typeof loc === 'object') {
+    const c = (loc as { coordinates?: [number, number] }).coordinates;
+    if (Array.isArray(c) && c.length === 2) {
+      row.longitude = c[0];
+      row.latitude = c[1];
+    }
+  }
+
   if (kind === 'doctor') {
     const { data } = await client.from('doctors').select('*').eq('business_id', id).maybeSingle();
     if (data) {

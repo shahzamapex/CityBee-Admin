@@ -235,6 +235,14 @@ function CellValue({
 }) {
   const value = row[field.name];
 
+  if (field.type === 'category' && typeof value === 'string' && value) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-brand/25 bg-brand-soft px-2 py-0.5 font-body text-[11px] font-semibold capitalize text-brand">
+        {value.split('|')[0].replace(/-/g, ' ')}
+      </span>
+    );
+  }
+
   if (field.listPill) {
     return value ? (
       <span className="inline-flex items-center rounded-full border border-emerald/20 bg-emerald/10 px-2 py-0.5 font-body text-[11px] font-semibold text-emerald">

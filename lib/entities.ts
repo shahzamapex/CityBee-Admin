@@ -15,7 +15,9 @@ export type FieldType =
   | 'uuid'
   | 'email'
   | 'time'
-  | 'phone';
+  | 'phone'
+  | 'address'
+  | 'category';
 
 export interface FieldLookup {
   field: string;
@@ -114,22 +116,14 @@ export const entities: Entity[] = [
     fields: [
       { name: 'name', label: 'Name', type: 'text', required: true, inList: true },
       { name: 'slug', label: 'Slug', type: 'text' },
-      { name: 'kind', label: 'Kind', type: 'select', required: true, inList: true, options: [
-        { value: 'restaurant', label: 'Restaurant' },
-        { value: 'doctor', label: 'Doctor' },
-        { value: 'hotel', label: 'Hotel' },
-        { value: 'salon', label: 'Salon' },
-        { value: 'shop', label: 'Shop' },
-        { value: 'mall', label: 'Mall' },
-        { value: 'service', label: 'Service' },
-      ]},
+      { name: 'category', label: 'Category', type: 'category', required: true, inList: true, help: 'Kind is set automatically from the category' },
       { name: 'tagline', label: 'Tagline', type: 'text', inList: true },
       { name: 'description', label: 'Description', type: 'textarea' },
       { name: 'phone', label: 'Phone', type: 'phone', inList: true, required: true },
       { name: 'whatsapp', label: 'WhatsApp', type: 'phone', sameAs: 'phone' },
-      { name: 'email', label: 'Email', type: 'email' },
+      { name: 'email', label: 'Email', type: 'email', required: true },
       { name: 'website', label: 'Website', type: 'url' },
-      { name: 'address', label: 'Address', type: 'text' },
+      { name: 'address', label: 'Address (Google Maps)', type: 'address', required: true, help: 'Search and pick the exact business location' },
       { name: 'locality', label: 'Locality / Area', type: 'text', inList: true },
       { name: 'city_id', label: 'City', type: 'uuid', lookups: [{ field: 'city_id', table: 'cities', label: 'name' }] },
       { name: 'rating', label: 'Rating', type: 'number', min: 0, max: 5, inList: true },
@@ -148,12 +142,12 @@ export const entities: Entity[] = [
       // ── Kind-specific details (shown/hidden by the kind select) ──────
       // Doctor extension
       { name: 'doctorName', label: 'Doctor Name', type: 'text', kindOnly: ['doctor'], placeholder: 'Dr. Anil Verma' },
-      { name: 'specialization', label: 'Specialization', type: 'text', kindOnly: ['doctor'], placeholder: 'Dentist, Cardiologist…' },
+      { name: 'specialization', label: 'Specialization', type: 'text', required: true, kindOnly: ['doctor'], placeholder: 'Dentist, Cardiologist…' },
       { name: 'qualification', label: 'Qualification', type: 'text', kindOnly: ['doctor'], placeholder: 'MBBS, MD…' },
       { name: 'experienceYears', label: 'Experience (years)', type: 'number', kindOnly: ['doctor'] },
       { name: 'consultationFee', label: 'Consultation Fee', type: 'text', kindOnly: ['doctor'], placeholder: '₹300' },
       // Restaurant extension
-      { name: 'cuisine', label: 'Cuisines', type: 'text', kindOnly: ['restaurant'], placeholder: 'Mughlai, North Indian…' },
+      { name: 'cuisine', label: 'Cuisines', type: 'text', required: true, kindOnly: ['restaurant'], placeholder: 'Mughlai, North Indian…' },
       { name: 'vegType', label: 'Food Type', type: 'select', kindOnly: ['restaurant'], options: [
         { value: 'veg', label: 'Pure Veg' },
         { value: 'non_veg', label: 'Non-Veg' },
@@ -161,7 +155,7 @@ export const entities: Entity[] = [
       ]},
       { name: 'priceRange', label: 'Price Range', type: 'text', kindOnly: ['restaurant', 'hotel'], placeholder: '₹₹ / ₹1,400–₹2,800 per night' },
       // Hotel extension
-      { name: 'hotelType', label: 'Hotel Type', type: 'select', kindOnly: ['hotel'], options: [
+      { name: 'hotelType', label: 'Hotel Type', type: 'select', required: true, kindOnly: ['hotel'], options: [
         { value: '1-Star', label: '1-Star' },
         { value: '2-Star', label: '2-Star' },
         { value: '3-Star', label: '3-Star' },
@@ -178,7 +172,7 @@ export const entities: Entity[] = [
     ],
     lookups: [{ field: 'city_id', table: 'cities', label: 'name' }],
     steps: [
-      { title: 'Basics', fields: ['name', 'kind', 'slug', 'tagline'] },
+      { title: 'Basics', fields: ['name', 'category', 'slug', 'tagline'] },
       { title: 'Contact', fields: ['phone', 'whatsapp', 'email', 'website'] },
       { title: 'Location', fields: ['address', 'locality', 'city_id'] },
       { title: 'Details', fields: ['description', 'opening_hours', 'rating', 'review_count', 'status'] },

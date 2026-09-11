@@ -28,7 +28,7 @@ export default async function EditEntityPage({
 
   const uuidOptions: Record<string, { value: string; label: string }[]> = {};
   for (const field of entity.fields) {
-    if (field.type === 'uuid') {
+    if (field.type === 'uuid' || field.type === 'category') {
       uuidOptions[field.name] = await getSelectOptions(field);
     }
   }

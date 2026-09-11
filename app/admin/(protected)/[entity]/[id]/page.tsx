@@ -172,6 +172,16 @@ function ViewValue({
   value: unknown;
   lookups: Record<string, Record<string, string>>;
 }) {
+  if (field.type === 'category' && typeof value === 'string' && value) {
+    const slug = value.split('|')[0];
+    return (
+      <span className="inline-flex items-center gap-1.5 font-medium capitalize text-ink">
+        <span className="material-symbols-outlined text-[15px] text-brand">category</span>
+        {slug.replace(/-/g, ' ')}
+      </span>
+    );
+  }
+
   if (field.type === 'boolean') {
     return (
       <span

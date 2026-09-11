@@ -10,18 +10,9 @@ import { redirect } from 'next/navigation';
 
 /** Kind-specific form fields that live in extension tables, not businesses. */
 const EXTENSION_KEYS = [
-  'doctorName', 'specialization', 'qualification', 'experienceYears', 'consultationFee',
+  'category', 'doctorName', 'specialization', 'qualification', 'experienceYears', 'consultationFee',
   'cuisine', 'vegType', 'priceRange', 'hotelType', 'checkInTime', 'checkOutTime', 'amenities',
 ] as const;
-
-/** kind → discovery category slug (restaurant maps to the dining category). */
-const KIND_CATEGORY: Record<string, string> = {
-  doctor: 'doctors',
-  restaurant: 'dining',
-  hotel: 'hotels',
-  salon: 'salons',
-  mall: 'malls',
-};
 
 /** "12:00 PM" / "23:45" → Postgres time string; null when unparsable. */
 function toTime(s: unknown): string | null {
@@ -50,6 +41,26 @@ function splitPayload(payload: Record<string, unknown>): {
     else base[k] = v;
   }
   return { base, ext };
+}
+
+/** Category select ("slug|defaultKind") → kind + geo + place id columns. */
+function applyCategory(
+  base: Record<string, unknown>,
+  form: FormData,
+): string | null {
+  const raw = String(form.get('category') ?? '');
+  if (!raw.includes('|')) return null;
+  const [slug, kind] = raw.split('|');
+  if (kind) base.kind = kind;
+
+  const lat = Number(form.get('latitude'));
+  const lng = Number(form.get('longitude'));
+  if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
+    base.location = `POINT(${lng} ${lat})`;
+  }
+  const placeId = String(form.get('googlePlaceId') ?? '').trim();
+  if (placeId) base.google_place_id = placeId;
+  return slug;
 }
 
 /** Combines the country-code select + digits input into "+CCdddd" values. */
@@ -131,10 +142,8 @@ async function upsertExtension(
   return null;
 }
 
-/** Links the business to its discovery category (kind → slug). */
-async function linkCategory(businessId: string, kind: string): Promise<string | null> {
-  const slug = KIND_CATEGORY[kind];
-  if (!slug) return null;
+/** Links the business to the chosen category slug (replaces old links). */
+async function linkCategory(businessId: string, slug: string): Promise<string | null> {
   const client = getAdminClient();
   const { data: category } = await client
     .from('categories')
@@ -142,6 +151,7 @@ async function linkCategory(businessId: string, kind: string): Promise<string | 
     .eq('slug', slug)
     .maybeSingle();
   if (!category) return null;
+  await client.from('business_categories').delete().eq('business_id', businessId);
   const { error } = await client
     .from('business_categories')
     .insert({ business_id: businessId, category_id: category.id });
@@ -159,6 +169,7 @@ export async function createRow(entityKey: string, form: FormData): Promise<void
   if (entityKey === 'businesses') {
     const { base, ext } = splitPayload(payload);
     mergePhones(base, form);
+    const categorySlug = applyCategory(base, form);
     const { data: row, error } = await getAdminClient()
       .from('businesses')
       .insert(base)
@@ -168,7 +179,9 @@ export async function createRow(entityKey: string, form: FormData): Promise<void
       redirect(`/admin/${entityKey}/new?error=${encodeURIComponent(error?.message ?? 'Insert failed')}`);
     }
     const extError = await upsertExtension(row.id, String(base.kind ?? 'service'), ext);
-    if (!extError) await linkCategory(row.id, String(base.kind ?? 'service'));
+    if (!extError && categorySlug) {
+      await linkCategory(row.id, categorySlug);
+    }
     if (extError) {
       redirect(`/admin/${entityKey}/new?error=${encodeURIComponent(extError)}`);
     }
@@ -194,11 +207,15 @@ export async function updateRow(entityKey: string, id: string, form: FormData): 
   if (entityKey === 'businesses') {
     const { base, ext } = splitPayload(payload);
     mergePhones(base, form);
+    const categorySlug = applyCategory(base, form);
     const { error } = await getAdminClient().from('businesses').update(base).eq('id', id);
     if (error) {
       redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(error.message)}`);
     }
     const extError = await upsertExtension(id, String(base.kind ?? 'service'), ext);
+    if (!extError && categorySlug) {
+      await linkCategory(id, categorySlug);
+    }
     if (extError) {
       redirect(`/admin/${entityKey}/${id}/edit?error=${encodeURIComponent(extError)}`);
     }

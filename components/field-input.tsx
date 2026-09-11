@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Field } from '@/lib/entities';
+import AddressInput from '@/components/address-input';
 
 const COUNTRY_CODES = [
   { code: '+91', label: '🇮🇳 +91' },
@@ -28,11 +29,15 @@ export default function FieldInput({
   value,
   options,
   hidden,
+  lat,
+  lng,
 }: {
   field: Field;
   value: unknown;
   options?: { value: string; label: string }[];
   hidden?: boolean;
+  lat?: unknown;
+  lng?: unknown;
 }) {
   const inputCls =
     'w-full rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15';
@@ -48,6 +53,14 @@ export default function FieldInput({
 
       {field.type === 'phone' ? (
         <PhoneInput field={field} strValue={strValue} inputCls={inputCls} />
+      ) : field.type === 'address' ? (
+        <AddressInput
+          field={field}
+          strValue={strValue}
+          lat={typeof lat === 'number' ? lat : null}
+          lng={typeof lng === 'number' ? lng : null}
+          inputCls={inputCls}
+        />
       ) : field.type === 'boolean' ? (
         <label className="flex items-center gap-2.5 rounded-lg border border-border-strong bg-white px-3.5 py-2.5 font-body text-sm font-medium text-ink-soft">
           <input
@@ -69,6 +82,21 @@ export default function FieldInput({
           placeholder={field.placeholder}
           className={inputCls}
         />
+      ) : field.type === 'category' ? (
+        <select
+          id={field.name}
+          name={field.name}
+          defaultValue={strValue}
+          required={field.required}
+          className={inputCls}
+        >
+          <option value="">Choose a category…</option>
+          {(options ?? []).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       ) : field.type === 'select' || (field.type === 'uuid' && options?.length) ? (
         <select
           id={field.name}
