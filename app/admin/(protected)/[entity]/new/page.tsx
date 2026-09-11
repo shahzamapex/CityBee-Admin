@@ -58,22 +58,9 @@ export default async function NewEntityPage({
         action={submit}
         className="space-y-6 rounded-xl border border-border-subtle bg-white p-6 shadow-sm"
       >
-        <FormWizard entity={entity} uuidOptions={uuidOptions} submitLabel={`Create ${entity.singular}`} />
+        <FormWizard entity={entity} uuidOptions={uuidOptions} submitLabel={`Create ${entity.singular}`}
+          cancelHref={`/admin/${entity.key}`} />
         <KindFields />
-        <div className="flex justify-end gap-3 border-t border-stone-100 pt-5">
-          <Link
-            href={`/admin/${entity.key}`}
-            className="rounded-lg border border-border-strong bg-white px-5 py-2.5 font-body text-sm font-semibold text-ink transition hover:bg-subtle"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            className="rounded-lg bg-brand px-6 py-2.5 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
-          >
-            Create {entity.singular}
-          </button>
-        </div>
       </form>
     </div>
   );

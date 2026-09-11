@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { Entity, Field } from '@/lib/entities';
 import FieldInput from '@/components/field-input';
 
@@ -16,11 +17,13 @@ export default function FormWizard({
   row,
   uuidOptions,
   submitLabel,
+  cancelHref,
 }: {
   entity: Entity;
   row?: Record<string, unknown> | null;
   uuidOptions: Record<string, { value: string; label: string }[]>;
   submitLabel: string;
+  cancelHref?: string;
 }) {
   const steps = entity.steps
     ? entity.steps.map((step) => ({
@@ -129,14 +132,24 @@ export default function FormWizard({
 
       {/* ── Nav ────────────────────────────────────────────────── */}
       <div className="mt-6 flex items-center justify-between border-t border-stone-100 pt-5">
-        <button
-          type="button"
-          onClick={() => setCurrent((c) => Math.max(c - 1, 0))}
-          disabled={current === 0}
-          className="rounded-lg border border-border-strong bg-white px-5 py-2.5 font-body text-sm font-semibold text-ink transition hover:bg-subtle disabled:invisible"
-        >
-          ← Back
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrent((c) => Math.max(c - 1, 0))}
+            disabled={current === 0}
+            className="rounded-lg border border-border-strong bg-white px-5 py-2.5 font-body text-sm font-semibold text-ink transition hover:bg-subtle disabled:invisible"
+          >
+            ← Back
+          </button>
+          {current === 0 && cancelHref && (
+            <Link
+              href={cancelHref}
+              className="font-body text-sm font-semibold text-ink-muted transition hover:text-rose"
+            >
+              Cancel
+            </Link>
+          )}
+        </div>
         {isLast ? (
           <button
             type="submit"

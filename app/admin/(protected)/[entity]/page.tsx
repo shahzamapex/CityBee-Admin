@@ -70,23 +70,29 @@ export default async function EntityListPage({ params, searchParams }: PageProps
             name="q"
             defaultValue={query.q ?? ''}
             placeholder={`Search ${entity.title.toLowerCase()}…`}
-            className="h-9.5 w-72 rounded-lg border border-border-strong bg-white py-2 pl-9 pr-3.5 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15"
+            className="h-9 w-72 rounded-lg border border-border-strong bg-white py-2 pl-9 pr-8 font-body text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/15"
           />
+          {query.q && (
+            <Link
+              href={`/admin/${entity.key}`}
+              className="absolute right-2 rounded-full p-0.5 text-ink-muted transition hover:bg-subtle hover:text-ink"
+              aria-label="Clear search"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </Link>
+          )}
         </div>
-        <button className="rounded-lg border border-border-strong bg-white px-4 py-2 font-body text-sm font-semibold text-ink transition hover:bg-subtle">
-          Search
-        </button>
-        <span className="ml-auto font-body text-xs font-semibold text-ink-muted">
-          {count} total
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-subtle px-3 py-1.5 font-body text-xs font-semibold text-ink-soft">
+          <span className="tabular-nums">{count}</span> total
         </span>
       </form>
 
       {/* ── Table ───────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="max-h-[calc(100vh-300px)] overflow-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-subtle bg-canvas text-left font-body text-[11px] font-bold uppercase tracking-wide text-ink-soft">
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border-subtle bg-canvas/95 text-left font-body text-[11px] font-bold uppercase tracking-wide text-ink-soft backdrop-blur">
                 {listFields.map((field) => (
                   <th key={field.name} className="px-4 py-3">
                     {field.label}
@@ -111,11 +117,23 @@ export default async function EntityListPage({ params, searchParams }: PageProps
               {rows.map((row) => (
                 <tr
                   key={String(row.id)}
-                  className="border-b border-border-subtle/60 last:border-0 hover:bg-canvas"
+                  className="border-b border-border-subtle/40 last:border-0 odd:bg-white even:bg-canvas/40 hover:bg-brand-soft/25"
                 >
-                  {listFields.map((field) => (
+                  {listFields.map((field, fi) => (
                     <td key={field.name} className="px-4 py-3 align-middle">
-                      <CellValue field={field} row={row} lookups={lookups} />
+                      {fi === 0 ? (
+                        <Link
+                          href={`/admin/${entity.key}/${row.id}`}
+                          className="group/name inline-flex max-w-[260px] items-center gap-1 truncate font-body font-semibold text-ink transition hover:text-brand"
+                        >
+                          <CellText field={field} row={row} lookups={lookups} />
+                          <span className="material-symbols-outlined text-[14px] text-brand opacity-0 transition group-hover/name:opacity-100">
+                            open_in_new
+                          </span>
+                        </Link>
+                      ) : (
+                        <CellValue field={field} row={row} lookups={lookups} />
+                      )}
                     </td>
                   ))}
                   <td className="whitespace-nowrap px-4 py-3 text-right">
@@ -185,6 +203,25 @@ export default async function EntityListPage({ params, searchParams }: PageProps
       )}
     </div>
   );
+}
+
+/** Plain text for the linked first column (no pills inside the link). */
+function CellText({
+  field,
+  row,
+  lookups,
+}: {
+  field: Field;
+  row: Record<string, unknown>;
+  lookups: Record<string, Record<string, string>>;
+}) {
+  const value = row[field.name];
+  if (field.type === 'uuid') {
+    return <>{lookups[field.name]?.[String(value)] ?? (value ? '…' : '—')}</>;
+  }
+  const text =
+    value === null || value === undefined || value === '' ? '—' : String(value);
+  return <span className="truncate">{text}</span>;
 }
 
 function CellValue({

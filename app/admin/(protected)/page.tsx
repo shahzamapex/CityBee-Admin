@@ -17,99 +17,108 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1600px]">
-      {/* ── Page header ───────────────────────────────────────── */}
-      <section className="flex flex-col justify-between gap-4 py-6 md:flex-row md:items-center">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <h1 className="font-headline text-2xl font-semibold tracking-tight text-ink">
+      {/* ── Hero band ─────────────────────────────────────────── */}
+      <section className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-[#B44400] via-brand to-[#FF9447] p-6 text-white shadow-lg md:p-8">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '22px 22px',
+          }}
+        />
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(255,255,255,0.25)]" />
+              <span className="font-body text-[11px] font-bold uppercase tracking-widest text-white/80">
+                Live Operations
+              </span>
+            </div>
+            <h1 className="mt-2 font-headline text-3xl font-bold tracking-tight">
               Operations Overview
             </h1>
-            <span className="rounded bg-teal-soft px-2 py-0.5 font-body text-[10px] font-semibold uppercase tracking-wider text-teal">
-              Live Data
-            </span>
+            <p className="mt-1 font-body text-sm text-white/85">
+              {kpis.totalCities} active cities · {totalForTrend.toLocaleString()} listings ·{' '}
+              {kpis.totalUsers.toLocaleString()} users
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <Link
+                href="/admin/submissions"
+                className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 font-body text-sm font-bold text-brand shadow-md transition hover:bg-white/90 active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-[18px]">inbox</span>
+                Review Submissions
+                {kpis.pendingSubmissions > 0 && (
+                  <span className="rounded-full bg-brand/10 px-1.5 py-0.5 font-body text-xs font-bold tabular-nums text-brand">
+                    {kpis.pendingSubmissions}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/admin/businesses/new"
+                className="flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 font-body text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                <span className="material-symbols-outlined text-[18px]">add_business</span>
+                Add Business
+              </Link>
+              <Link
+                href="/admin/bulk-import"
+                className="flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 font-body text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                <span className="material-symbols-outlined text-[18px]">cloud_upload</span>
+                Bulk Import
+              </Link>
+            </div>
           </div>
-          <p className="font-body text-sm text-ink-soft">
-            Real-time performance across {kpis.totalCities} active cities and{' '}
-            {totalForTrend.toLocaleString()} listings
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/admin/submissions"
-            className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover"
-          >
-            <span className="material-symbols-outlined text-[18px]">inbox</span>
-            Review Submissions
-            {kpis.pendingSubmissions > 0 && (
-              <span className="rounded-full bg-white/25 px-1.5 py-0.5 font-body text-xs font-bold tabular-nums">
-                {kpis.pendingSubmissions}
-              </span>
-            )}
-          </Link>
-          <Link
-            href="/admin/businesses/new"
-            className="flex items-center gap-1.5 rounded-lg border border-border-strong bg-white px-4 py-2 font-body text-sm font-semibold text-ink transition hover:bg-subtle"
-          >
-            <span className="material-symbols-outlined text-[18px]">storefront</span>
-            Add Business
-          </Link>
+
+          {/* Big numbers strip */}
+          <div className="grid shrink-0 grid-cols-3 gap-3 md:gap-4">
+            <HeroStat label="Businesses" value={kpis.totalBusinesses} />
+            <HeroStat label="Offers" value={kpis.activeOffers} />
+            <HeroStat
+              label="Pending"
+              value={kpis.pendingSubmissions + kpis.pendingBusinesses}
+              alert={kpis.pendingSubmissions + kpis.pendingBusinesses > 0}
+            />
+          </div>
         </div>
       </section>
 
-      {/* ── KPI metric cards (5) ───────────────────────────────── */}
-      <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {/* ── KPI metric cards ──────────────────────────────────── */}
+      <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon="storefront"
           label="Active Businesses"
           value={kpis.totalBusinesses}
-          tone="brand"
+          accent="bg-brand"
           href="/admin/businesses"
-          footer={
-            <span className="font-body text-xs text-ink-soft">
-              {kpis.totalCities} cities covered
-            </span>
-          }
+          footer={`${kpis.totalCities} cities covered`}
         />
         <KpiCard
           icon="inbox"
           label="Pending Submissions"
           value={kpis.pendingSubmissions}
-          tone={kpis.pendingSubmissions > 0 ? 'rose' : 'muted'}
+          accent={kpis.pendingSubmissions > 0 ? 'bg-rose' : 'bg-emerald'}
           href="/admin/submissions"
-          footer={
-            kpis.pendingSubmissions > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded bg-rose/10 px-1.5 py-0.5 font-body text-[11px] font-semibold text-rose">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose" />
-                Awaiting review
-              </span>
-            ) : (
-              <span className="font-body text-xs text-ink-soft">All caught up</span>
-            )
-          }
+          footer={kpis.pendingSubmissions > 0 ? 'Awaiting review' : 'All caught up'}
+          pulse={kpis.pendingSubmissions > 0}
         />
         <KpiCard
           icon="local_offer"
           label="Active Offers"
           value={kpis.activeOffers}
-          tone="teal"
+          accent="bg-teal"
           href="/admin/offers"
-          footer={<span className="font-body text-xs text-ink-soft">live deals</span>}
-        />
-        <KpiCard
-          icon="verified"
-          label="Pending Approvals"
-          value={kpis.pendingBusinesses}
-          tone="amber"
-          href="/admin/businesses"
-          footer={<span className="font-body text-xs text-ink-soft">businesses</span>}
+          footer="live deals"
         />
         <KpiCard
           icon="star"
           label="Total Reviews"
           value={kpis.totalReviews}
-          tone="muted"
+          accent="bg-amber"
           href="/admin/reviews"
-          footer={<span className="font-body text-xs text-ink-soft">{kpis.totalUsers} users</span>}
+          footer={`${kpis.totalUsers} users`}
         />
       </section>
 
@@ -148,9 +157,9 @@ export default async function DashboardPage() {
         </Card>
 
         <div className="lg:col-span-2">
-          <Card title="Latest Submissions" subtitle="Newest requests from the public form">
+          <Card title="Latest Submissions" subtitle="Newest requests from the app">
             {data.recentSubmissions.length === 0 ? (
-              <Empty>No submissions yet — share the public form!</Empty>
+              <Empty>No submissions yet.</Empty>
             ) : (
               <div className="-mx-2">
                 {data.recentSubmissions.map((sub) => (
@@ -189,51 +198,63 @@ export default async function DashboardPage() {
 
 // ── Building blocks ──────────────────────────────────────────────
 
-const TONES: Record<string, { box: string; text: string; value: string }> = {
-  brand: { box: 'bg-subtle text-brand', text: 'text-ink-soft', value: 'text-ink' },
-  teal: { box: 'bg-teal-soft text-teal', text: 'text-ink-soft', value: 'text-ink' },
-  amber: { box: 'bg-amber/10 text-amber', text: 'text-ink-soft', value: 'text-amber' },
-  rose: { box: 'bg-rose/10 text-rose', text: 'text-ink-soft', value: 'text-rose' },
-  muted: { box: 'bg-subtle text-ink-soft', text: 'text-ink-soft', value: 'text-ink' },
-};
+function HeroStat({ label, value, alert }: { label: string; value: number; alert?: boolean }) {
+  return (
+    <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur">
+      <div className={`font-headline text-[28px] font-bold leading-8 tabular-nums ${alert ? 'text-amber-200' : 'text-white'}`}>
+        {value.toLocaleString()}
+      </div>
+      <div className="font-body text-[10.5px] font-semibold uppercase tracking-wider text-white/70">
+        {label}
+      </div>
+    </div>
+  );
+}
 
 function KpiCard({
   icon,
   label,
   value,
-  tone,
+  accent,
   href,
   footer,
+  pulse,
 }: {
   icon: string;
   label: string;
   value: number;
-  tone: keyof typeof TONES;
+  accent: string;
   href: string;
-  footer: React.ReactNode;
+  footer: string;
+  pulse?: boolean;
 }) {
-  const t = TONES[tone] ?? TONES.muted;
   return (
     <Link
       href={href}
-      className="group flex flex-col justify-between overflow-hidden rounded-xl border border-border-subtle bg-white p-4 shadow-sm transition hover:shadow-md"
+      className="group relative overflow-hidden rounded-xl border border-border-subtle bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
+      <span className={`absolute inset-x-0 top-0 h-1 ${accent}`} />
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
           <span className="font-body text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
             {label}
           </span>
-          <span className={`mt-1 font-headline text-[32px] font-bold leading-10 tabular-nums tracking-tight ${t.value}`}>
-            {value}
+          <span className="mt-1 font-headline text-[32px] font-bold leading-10 tabular-nums tracking-tight text-ink">
+            {value.toLocaleString()}
           </span>
         </div>
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors group-hover:bg-brand group-hover:text-white ${t.box}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm ${accent} ${pulse ? 'animate-pulse' : ''}`}
         >
           <span className="material-symbols-outlined text-[22px]">{icon}</span>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-1.5">{footer}</div>
+      <div className="mt-4 flex items-center gap-1.5">
+        <span className="font-body text-xs text-ink-soft">{footer}</span>
+        <span className="material-symbols-outlined ml-auto text-[16px] text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-brand">
+          arrow_forward
+        </span>
+      </div>
     </Link>
   );
 }
@@ -249,9 +270,12 @@ function Card({
 }) {
   return (
     <div className="rounded-xl border border-border-subtle bg-white shadow-sm">
-      <div className="border-b border-border-subtle/60 px-5 pb-3 pt-4">
-        <h3 className="font-headline text-base font-semibold tracking-tight text-ink">{title}</h3>
-        <p className="font-body text-xs text-ink-soft">{subtitle}</p>
+      <div className="flex items-center justify-between border-b border-border-subtle/60 px-5 pb-3 pt-4">
+        <div>
+          <h3 className="font-headline text-base font-semibold tracking-tight text-ink">{title}</h3>
+          <p className="font-body text-xs text-ink-soft">{subtitle}</p>
+        </div>
+        <span className="material-symbols-outlined text-[18px] text-ink-muted/50">more_vert</span>
       </div>
       <div className="p-5">{children}</div>
     </div>
@@ -272,11 +296,14 @@ function MiniStat({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-lg border border-border-subtle bg-canvas px-3.5 py-2.5 transition hover:border-brand/30 hover:bg-brand-soft/30"
+      className="group flex items-center gap-3 rounded-lg border border-border-subtle bg-canvas px-3.5 py-2.5 transition hover:border-brand/30 hover:bg-brand-soft/30"
     >
       <span className="material-symbols-outlined text-[18px] text-brand">{icon}</span>
       <span className="font-body text-sm font-semibold text-ink-soft">{label}</span>
       <span className="ml-auto font-headline text-lg font-bold tabular-nums text-ink">{value}</span>
+      <span className="material-symbols-outlined text-[15px] text-ink-muted opacity-0 transition group-hover:opacity-100">
+        chevron_right
+      </span>
     </Link>
   );
 }

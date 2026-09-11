@@ -121,7 +121,7 @@ export default function AdminSidebar({ pendingSubmissions }: { pendingSubmission
       {/* ── Pinned footer ──────────────────────────────────────────── */}
       <div className="mt-auto shrink-0 border-t border-border-subtle p-3">
         <Link
-          href="/admin/notifications"
+          href="/admin/settings"
           className="flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-ink-soft transition hover:bg-subtle hover:text-ink"
         >
           <span className="material-symbols-outlined text-[16px] opacity-70">settings</span>
