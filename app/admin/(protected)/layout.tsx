@@ -1,5 +1,6 @@
 import AdminSidebar from '@/components/admin-sidebar';
 import AdminHeader from '@/components/admin-header';
+import AdminContent from '@/components/admin-content';
 import { getAdminClient } from '@/lib/supabase';
 
 /**
@@ -22,12 +23,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen">
       <AdminSidebar pendingSubmissions={pending} />
-      <div className="pl-64">
+      <AdminContent>
         <AdminHeader pendingSubmissions={pending} />
         <main className="min-h-screen w-full bg-canvas px-4 pb-12 pt-20 md:px-6">
           {children}
         </main>
-      </div>
+      </AdminContent>
     </div>
   );
 }
