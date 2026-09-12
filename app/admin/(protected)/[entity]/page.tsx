@@ -35,7 +35,15 @@ export default async function EntityListPage({ params, searchParams }: PageProps
   const lookups = await resolveLookups(entity, rows);
   const perPage = 25;
   const totalPages = Math.max(1, Math.ceil(count / perPage));
-  const listFields = entity.fields.filter((f) => f.inList);
+  // Full data: every field except explicitly hidden ones and virtuals.
+  const listFields = entity.fields.filter(
+    (f) => f.inList !== false && f.type !== 'location',
+  );
+  listFields.push({
+    name: 'created_at',
+    label: 'Created',
+    type: 'text',
+  } as (typeof listFields)[number]);
 
   return (
     <div className="mx-auto max-w-[1600px]">
@@ -285,6 +293,19 @@ function CellValue({
     value === null || value === undefined || value === ''
       ? '—'
       : String(value);
+
+  // Timestamps (created_at/updated_at) → short readable form.
+  if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+    const d = new Date(text);
+    if (!Number.isNaN(d.getTime())) {
+      return (
+        <span className="font-body text-xs text-ink-soft" title={d.toLocaleString()}>
+          {d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
+      );
+    }
+  }
+
   return (
     <span
       className={`line-clamp-1 font-body ${field.name === 'name' || field.name === 'title' || field.name === 'business_name' ? 'font-semibold text-ink' : 'text-ink-soft'}`}
