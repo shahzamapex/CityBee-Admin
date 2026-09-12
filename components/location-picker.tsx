@@ -265,7 +265,7 @@ export default function LocationPicker({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="address" className="mb-1.5 block font-body text-sm font-semibold text-ink">
-            Address <span className="font-normal text-ink-muted">(optional)</span>
+            Address <span className="text-brand">*</span>
           </label>
           <input
             id="address"
@@ -273,13 +273,14 @@ export default function LocationPicker({
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
+            required
             placeholder="Auto-filled from the pin, or type it"
             className={inputCls}
           />
         </div>
         <div>
           <label htmlFor="locality" className="mb-1.5 block font-body text-sm font-semibold text-ink">
-            Locality / Area <span className="font-normal text-ink-muted">(optional)</span>
+            Locality / Area <span className="text-brand">*</span>
           </label>
           <input
             id="locality"
@@ -287,6 +288,7 @@ export default function LocationPicker({
             type="text"
             value={locality}
             onChange={(e) => setLocality(e.target.value)}
+            required
             placeholder="e.g. Civil Lines"
             className={inputCls}
           />
