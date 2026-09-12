@@ -72,6 +72,11 @@ async function applyCity(
     .select('id')
     .single();
   if (!error && city) base.city_id = city.id;
+  // City choice also fills the business's state/country columns.
+  const state = String(form.get('city_state') ?? '').trim();
+  const country = String(form.get('city_country') ?? '').trim();
+  if (state) base.state_region = state;
+  if (country) base.country = country;
 }
 
 /** Category select ("slug|defaultKind") → kind + geo + place id columns. */
